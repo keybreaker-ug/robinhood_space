@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robinhood Portfolio Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-900">
+    <!-- Login View -->
+    <div id="loginView" class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+            <div class="text-center mb-8">
+                <div class="inline-block p-3 bg-green-900/50 rounded-full mb-4">
+                    <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <h1 class="text-3xl font-bold text-white mb-2">Robinhood Portfolio</h1>
+                <p class="text-gray-400">Track your investments with detailed analytics</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition" placeholder="Enter your username">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition" placeholder="Enter your password">
+                </div>
+
+                <div id="errorMsg" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm"></div>
+
+                <button onclick="handleLogin()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
+                    Login to Robinhood
+                </button>
+            </div>
+
+            <div class="mt-6 p-4 bg-blue-900/30 border border-blue-700/50 rounded-lg">
+                <p class="text-xs text-blue-300">
+                    <strong>Security Note:</strong> Your credentials are sent to the local backend server running on your machine. 
+                    Make sure the Flask server is running on port 5000.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Waiting View -->
+    <div id="waitingView" class="hidden min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
+        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-12 w-full max-w-md text-center">
+            <div class="inline-block p-4 bg-green-900/50 rounded-full mb-6 animate-pulse">
+                <svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+            <h2 id="waitingTitle" class="text-2xl font-bold text-white mb-4">Waiting for Approval</h2>
+            <p id="waitingMessage" class="text-gray-400 mb-6">Check Robinhood for approval to continue...</p>
+            <div class="flex justify-center space-x-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboardView" class="hidden min-h-screen bg-gray-900 p-4 md:p-8">
+        <div class="max-w-7xl mx-auto">
+            <div class="mb-8">
+                <h1 class="text-4xl font-bold text-white mb-2">Portfolio Dashboard</h1>
+                <p class="text-gray-400">Real-time view of your Robinhood investments</p>
+            </div>
+
+            <!-- Top Section: Summary Cards and Pie Chart -->
+            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
+                <!-- Summary Cards (4 columns) -->
+                <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div id="summaryCards"></div>
+                </div>
+                
+                <!-- Pie Chart (1 column) -->
+                <div class="lg:col-span-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-4">
+                    <h2 class="text-sm font-bold text-white mb-2 text-center">Allocation</h2>
+                    <div style="position: relative; height: 200px;">
+                        <canvas id="allocationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- S&P 500 Comparison -->
+            <div id="sp500Card" class="hidden bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-xl shadow-lg p-6 mb-8"></div>
+
+            <!-- Performance Chart -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6 mb-8">
+                <h2 class="text-xl font-bold text-white mb-4">Performance vs S&P 500</h2>
+                <div style="height: 400px;">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Holdings Table -->
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden">
+                <div class="p-6 border-b border-gray-700">
+                    <h2 class="text-xl font-bold text-white">Stock Holdings</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-900">
+                            <tr>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Stock</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Quantity</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Avg Cost</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Current</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Investment</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Value</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">P&L</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">XIRR</th>
+                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Time Held</th>
+                            </tr>
+                        </thead>
+                        <tbody id="holdingsTableBody" class="divide-y divide-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <button onclick="handleLogout()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+                    Logout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:5000/api';
+        let allocationChartInstance = null;
+        let performanceChartInstance = null;
+
+        function showView(view) {
+            document.getElementById('loginView').classList.add('hidden');
+            document.getElementById('waitingView').classList.add('hidden');
+            document.getElementById('dashboardView').classList.add('hidden');
+            document.getElementById(view + 'View').classList.remove('hidden');
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').classList.add('hidden');
+        }
+
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            return `${(value * 100).toFixed(2)}%`;
+        }
+
+        async function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showError('Please enter both username and password');
+                return;
+            }
+
+            hideError();
+            
+            // Show "Waiting for Approval" immediately
+            showView('waiting');
+            document.getElementById('waitingTitle').textContent = 'Waiting for Approval';
+            document.getElementById('waitingMessage').textContent = 'Check Robinhood for approval to continue...';
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Update to "Retrieving Data"
+                    document.getElementById('waitingTitle').textContent = 'Retrieving Data';
+                    document.getElementById('waitingMessage').textContent = 'Please wait while we fetch your portfolio information...';
+                    
+                    try {
+                        const portfolioResponse = await fetch(`${API_URL}/portfolio`);
+                        const portfolioData = await portfolioResponse.json();
+                        
+                        if (portfolioData.success) {
+                            renderDashboard(portfolioData.data);
+                            showView('dashboard');
+                        } else {
+                            showError('Failed to fetch portfolio data');
+                            showView('login');
+                        }
+                    } catch (err) {
+                        showError('Error fetching portfolio: ' + err.message);
+                        showView('login');
+                    }
+                } else {
+                    showError(data.message || 'Login failed');
+                    showView('login');
+                }
+            } catch (err) {
+                showError('Connection error. Make sure the backend server is running on port 5000.');
+                showView('login');
+            }
+        }
+
+        async function handleLogout() {
+            await fetch(`${API_URL}/logout`, { method: 'POST' });
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showView('login');
+        }
+
+        function renderDashboard(data) {
+            const { stocks, sp500, totalInvestment, totalCurrentValue, totalProfitLoss, overallXirr, historicalData } = data;
+            const totalReturn = (totalProfitLoss / totalInvestment) * 100;
+
+            // Render summary cards
+            const summaryHTML = `
+                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm font-medium">Total Investment</span>
+                    </div>
+                    <p class="text-2xl font-bold text-white">${formatCurrency(totalInvestment)}</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm font-medium">Current Value</span>
+                    </div>
+                    <p class="text-2xl font-bold text-white">${formatCurrency(totalCurrentValue)}</p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm font-medium">Total P&L</span>
+                    </div>
+                    <p class="text-2xl font-bold ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        ${formatCurrency(totalProfitLoss)}
+                    </p>
+                    <p class="text-sm mt-1 ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        ${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%
+                    </p>
+                </div>
+                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-400 text-sm font-medium">Overall XIRR</span>
+                    </div>
+                    <p class="text-2xl font-bold text-purple-400">${formatPercent(overallXirr)}</p>
+                    <p class="text-xs text-gray-500 mt-1">Annualized return</p>
+                </div>
+            `;
+            document.getElementById('summaryCards').innerHTML = summaryHTML;
+
+            // Render S&P 500 comparison
+            if (sp500) {
+                const sp500HTML = `
+                    <h3 class="text-lg font-bold text-white mb-4">📊 S&P 500 Benchmark Comparison</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">S&P 500 Value</p>
+                            <p class="text-white font-bold">${formatCurrency(sp500.currentValue)}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">S&P 500 P&L</p>
+                            <p class="font-bold ${sp500.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                                ${formatCurrency(sp500.profitLoss)}
+                            </p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">S&P 500 XIRR</p>
+                            <p class="text-purple-400 font-bold">${formatPercent(sp500.xirr)}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-400 text-xs mb-1">Portfolio vs S&P 500</p>
+                            <p class="font-bold ${overallXirr >= sp500.xirr ? 'text-green-400' : 'text-red-400'}">
+                                ${overallXirr >= sp500.xirr ? '✓ Outperforming' : '✗ Underperforming'}
+                            </p>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('sp500Card').innerHTML = sp500HTML;
+                document.getElementById('sp500Card').classList.remove('hidden');
+            }
+
+            // Render charts
+            renderAllocationChart(stocks);
+            renderPerformanceChart(historicalData || []);
+
+            // Render holdings table
+            renderHoldingsTable(stocks, sp500);
+        }
+
+        function renderAllocationChart(stocks) {
+            const ctx = document.getElementById('allocationChart').getContext('2d');
+            
+            if (allocationChartInstance) {
+                allocationChartInstance.destroy();
+            }
+
+            allocationChartInstance = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: stocks.map(s => s.symbol),
+                    datasets: [{
+                        data: stocks.map(s => s.currentValue),
+                        backgroundColor: stocks.map(s => s.profitLoss >= 0 ? '#22C55E' : '#EF4444'),
+                        borderColor: '#1F2937',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            titleColor: '#fff',
+                            bodyColor: '#9CA3AF',
+                            borderColor: '#374151',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    const stock = stocks[context.dataIndex];
+                                    const percentage = ((stock.currentValue / stocks.reduce((sum, s) => sum + s.currentValue, 0)) * 100).toFixed(1);
+                                    return [
+                                        `${stock.symbol}: ${percentage}%`,
+                                        `Value: ${formatCurrency(stock.currentValue)}`,
+                                        `P&L: ${formatCurrency(stock.profitLoss)}`
+                                    ];
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderPerformanceChart(historicalData) {
+            const ctx = document.getElementById('performanceChart').getContext('2d');
+            
+            if (performanceChartInstance) {
+                performanceChartInstance.destroy();
+            }
+
+            if (!historicalData || historicalData.length === 0) {
+                ctx.fillStyle = '#9CA3AF';
+                ctx.font = '16px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('No historical data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
+                return;
+            }
+
+            performanceChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: historicalData.map(d => d.date),
+                    datasets: [
+                        {
+                            label: 'Portfolio',
+                            data: historicalData.map(d => d.portfolio),
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        },
+                        {
+                            label: 'S&P 500',
+                            data: historicalData.map(d => d.sp500),
+                            borderColor: '#EF4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            pointHoverRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            labels: { 
+                                color: '#9CA3AF',
+                                font: { size: 12 }
+                            } 
+                        },
+                        tooltip: {
+                            backgroundColor: '#1F2937',
+                            titleColor: '#fff',
+                            bodyColor: '#9CA3AF',
+                            borderColor: '#374151',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                color: '#9CA3AF',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }, 
+                            grid: { color: '#374151' } 
+                        },
+                        y: { 
+                            ticks: { 
+                                color: '#9CA3AF',
+                                callback: function(value) {
+                                    return formatCurrency(value);
+                                }
+                            }, 
+                            grid: { color: '#374151' } 
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderHoldingsTable(stocks, sp500) {
+            const allHoldings = sp500 ? [...stocks, sp500] : stocks;
+            
+            const tableHTML = allHoldings.map(stock => {
+                const isSP500 = stock.symbol === '^GSPC';
+                const bgColor = isSP500 ? 'rgba(59, 130, 246, 0.1)' : 
+                               stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)';
+                const dotColor = isSP500 ? 'bg-blue-400' : stock.profitLoss >= 0 ? 'bg-green-400' : 'bg-red-400';
+                
+                return `
+                    <tr style="background-color: ${bgColor}">
+                        <td class="px-4 py-2">
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 rounded-full mr-3 ${dotColor}"></div>
+                                <div>
+                                    <div class="font-semibold text-white flex items-center text-sm">
+                                        ${stock.symbol}
+                                        ${isSP500 ? '<span class="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded">BENCHMARK</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-gray-400">${stock.name}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-4 py-2 text-right text-gray-300 text-sm">
+                            ${isSP500 ? stock.quantity.toFixed(4) : stock.quantity}
+                        </td>
+                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.avgCost)}</td>
+                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.currentPrice)}</td>
+                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.investment)}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-white text-sm">${formatCurrency(stock.currentValue)}</td>
+                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                            ${formatCurrency(stock.profitLoss)}
+                        </td>
+                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.xirr >= 0 ? 'text-purple-400' : 'text-orange-400'}">
+                            ${formatPercent(stock.xirr)}
+                        </td>
+                        <td class="px-4 py-2 text-xs text-gray-400">${stock.timeHeld}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.getElementById('holdingsTableBody').innerHTML = tableHTML;
+        }
+
+        // Allow enter key to submit login
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    </script>
+</body>
+</html>

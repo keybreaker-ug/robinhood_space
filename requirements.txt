@@ -1,0 +1,10 @@
+robin-stocks
+gspread
+gspread-formatting
+oauth2client
+python-dateutil
+pyxirr
+flask
+flask-cors
+yfinance
+pandas
