@@ -328,12 +328,21 @@
         if (typeof window.etfHueRamp !== 'function') {
             window.etfHueRamp = function etfHueRamp(baseColor, count) {
                 const safeCount = Math.max(1, count);
-                const startL = 34;
-                const endL = 66;
-                const saturation = 74;
-                const hue = 208;
+                const distinctBlues = [
+                    '#0B5ED7', '#1E6FE8', '#2A83F6', '#3F95FF',
+                    '#2C6FD1', '#4A8DE6', '#5EA4FF', '#3A78C2',
+                    '#6AB8FF', '#2872B7', '#4F9ADF', '#76C6FF'
+                ];
+                if (safeCount <= distinctBlues.length) {
+                    return distinctBlues.slice(0, safeCount);
+                }
+
+                const startL = 35;
+                const endL = 70;
+                const saturation = 80;
                 return Array.from({ length: safeCount }, (_, index) => {
                     const ratio = safeCount === 1 ? 0.5 : index / (safeCount - 1);
+                    const hue = 205 + Math.round(Math.sin(index * 1.7) * 10);
                     const lightness = Math.round(startL + (endL - startL) * ratio);
                     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
                 });
@@ -601,16 +610,6 @@
                 breadcrumb.textContent = `Overview / ${allocationViewState.key}`;
             }
             backBtn.classList.remove('hidden');
-        }
-
-        function simpleHash(input) {
-            let hash = 0;
-            const value = String(input || '');
-            for (let i = 0; i < value.length; i += 1) {
-                hash = ((hash << 5) - hash) + value.charCodeAt(i);
-                hash |= 0;
-            }
-            return Math.abs(hash);
         }
 
         const allocationCenterLabelPlugin = {
@@ -1097,9 +1096,8 @@
 
             const etfRamp = window.etfHueRamp(window.ALLOCATION_PALETTE.etfBase, Math.max(1, allEtfSymbols.length));
             const etfSymbolShadeMap = {};
-            allEtfSymbols.forEach((symbol) => {
-                const idx = simpleHash(symbol) % etfRamp.length;
-                etfSymbolShadeMap[symbol] = etfRamp[idx];
+            allEtfSymbols.forEach((symbol, index) => {
+                etfSymbolShadeMap[symbol] = etfRamp[index % etfRamp.length];
             });
 
             const innerColors = innerSlices.map((slice, index) => {
@@ -1128,6 +1126,7 @@
             const etfCircumferenceFraction = etfInnerSlice && totalPortfolio > 0
                 ? (etfInnerSlice.value / totalPortfolio)
                 : 0;
+            const baseRotationDeg = -90;
 
             const outerData = outerSlices.map((slice) => slice.value);
             const outerColorsBase = outerSlices.map((slice, index) => {
@@ -1194,7 +1193,7 @@
                             hoverOffset: 2,
                             radius: '100%',
                             cutout: '88%',
-                            rotation: -90 + (etfRotationStartFraction * 360),
+                            rotation: baseRotationDeg + (etfRotationStartFraction * 360),
                             circumference: etfCircumferenceFraction * 360
                         }
                     ]
@@ -1202,6 +1201,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    rotation: baseRotationDeg,
                     cutout: '52%',
                     onHover: (event, activeElements, chart) => {
                         const activeOuter = activeElements.find((entry) => entry.datasetIndex === 1);
