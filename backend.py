@@ -8,6 +8,7 @@ from collections import defaultdict
 from pyxirr import xirr
 import pandas as pd
 import os
+import inspect
 
 app = Flask(__name__, static_folder='.')
 CORS(app)  # Enable CORS for local development
@@ -15,6 +16,7 @@ CORS(app)  # Enable CORS for local development
 # Global variable to store login state
 logged_in = False
 login_token = None
+asset_metadata_cache = {}
 
 @app.route('/')
 def serve_index():
@@ -24,16 +26,40 @@ def serve_index():
 @app.route('/api/login', methods=['POST'])
 def login():
     global logged_in, login_token
-    
-    data = request.json
-    username = data.get('username')
+
+    data = request.get_json(silent=True) or {}
+    username = (data.get('username') or '').strip()
     password = data.get('password')
+    mfa_code = (data.get('mfa_code') or data.get('mfaCode') or '').strip()
+
+    if not username or not password:
+        return jsonify({
+            'success': False,
+            'message': 'Username and password are required'
+        }), 400
     
     try:
-        # Login to Robinhood
-        login_result = rh.login(username, password)
-        
-        if login_result:
+        base_login_kwargs = {
+            'username': username,
+            'password': password,
+            'store_session': True,
+        }
+        if mfa_code:
+            base_login_kwargs['mfa_code'] = mfa_code
+
+        try:
+            login_signature = inspect.signature(rh.login)
+            accepted_params = set(login_signature.parameters.keys())
+            login_kwargs = {
+                key: value for key, value in base_login_kwargs.items()
+                if key in accepted_params
+            }
+            login_result = rh.login(**login_kwargs)
+        except (TypeError, ValueError):
+            # Fallback for environments where signature introspection or kwargs mismatch fails.
+            login_result = rh.login(username, password)
+
+        if isinstance(login_result, dict) and login_result.get('access_token'):
             logged_in = True
             login_token = login_result
             return jsonify({
@@ -41,17 +67,42 @@ def login():
                 'message': 'Login successful',
                 'requires_2fa': False
             })
-        else:
-            return jsonify({
-                'success': False,
-                'message': 'Login failed'
-            }), 401
-            
-    except Exception as e:
+
+        if isinstance(login_result, dict):
+            challenge = login_result.get('challenge')
+            if login_result.get('mfa_required') or challenge:
+                challenge_message = login_result.get('detail') or 'Two-factor authentication is required'
+                return jsonify({
+                    'success': False,
+                    'message': challenge_message,
+                    'requires_2fa': True
+                }), 401
+
+            detail_message = login_result.get('detail')
+            if detail_message:
+                return jsonify({
+                    'success': False,
+                    'message': detail_message,
+                    'requires_2fa': False
+                }), 401
+
         return jsonify({
             'success': False,
-            'message': str(e)
-        }), 500
+            'message': 'Login failed. Please verify your credentials and any Robinhood approval prompts.'
+        }), 401
+
+    except Exception as e:
+        error_message = str(e)
+        status_code = 500
+
+        lower_error = error_message.lower()
+        if 'invalid' in lower_error or 'unauthorized' in lower_error or 'authenticate' in lower_error:
+            status_code = 401
+
+        return jsonify({
+            'success': False,
+            'message': error_message
+        }), status_code
 
 @app.route('/api/portfolio', methods=['GET'])
 def get_portfolio():
@@ -79,6 +130,22 @@ def get_portfolio():
                 'Profit and Loss': float(data['equity']) - (float(data['quantity']) * float(data['average_buy_price'])),
             }
             stocks_data.append(stock)
+
+        if not stocks_data:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'stocks': [],
+                    'sp500': None,
+                    'historicalData': [],
+                    'monthlyCashFlows': [],
+                    'cashFlowTransactions': [],
+                    'totalInvestment': 0,
+                    'totalCurrentValue': 0,
+                    'totalProfitLoss': 0,
+                    'overallXirr': 0
+                }
+            })
         
         # Fetch transactions
         individual_orders = fetch_transactions()
@@ -97,10 +164,17 @@ def get_portfolio():
         
         # Get historical performance data
         historical_data = get_historical_performance(individual_orders, earliest_date)
+
+        # Get monthly cash flow summary
+        monthly_cash_flows = get_monthly_cash_flows(individual_orders)
+
+        # Flatten all transaction cash flows for frontend aggregation/chart controls
+        cash_flow_transactions = get_cash_flow_transactions(individual_orders)
         
         # Combine all data
         portfolio_stocks = []
         for stock, xirr_value, investment in zip(stocks_data, xirr_values, investments):
+            metadata = get_asset_metadata(stock['Symbol'], stock['Name'])
             portfolio_stocks.append({
                 'name': stock['Name'],
                 'symbol': stock['Symbol'],
@@ -111,7 +185,9 @@ def get_portfolio():
                 'currentValue': stock['Current Value'],
                 'profitLoss': stock['Profit and Loss'],
                 'xirr': xirr_value,
-                'timeHeld': stock_ages.get(stock['Symbol'], 'N/A')
+                'timeHeld': stock_ages.get(stock['Symbol'], 'N/A'),
+                'sector': metadata['sector'],
+                'isEtf': metadata['isEtf']
             })
         
         total_investment = sum(investments)
@@ -124,6 +200,8 @@ def get_portfolio():
                 'stocks': portfolio_stocks,
                 'sp500': sp500_data,
                 'historicalData': historical_data,
+                'monthlyCashFlows': monthly_cash_flows,
+                'cashFlowTransactions': cash_flow_transactions,
                 'totalInvestment': total_investment,
                 'totalCurrentValue': total_current_value,
                 'totalProfitLoss': total_profit_loss,
@@ -158,6 +236,34 @@ def fetch_transactions():
                 individual_orders[symbol][1].append(float(execution['rounded_notional']) * (-1 if order['side'] == 'buy' else 1))
     
     return individual_orders
+
+def get_asset_metadata(symbol, fallback_name=''):
+    """Return cached sector/ETF metadata for a symbol."""
+    if symbol in asset_metadata_cache:
+        return asset_metadata_cache[symbol]
+
+    sector = 'Uncategorized'
+    is_etf = False
+
+    try:
+        info = yf.Ticker(symbol).info or {}
+        sector = (info.get('sector') or info.get('category') or sector).strip() if isinstance(info.get('sector') or info.get('category') or sector, str) else sector
+        quote_type = (info.get('quoteType') or '').upper()
+        if quote_type == 'ETF':
+            is_etf = True
+    except Exception:
+        pass
+
+    name_text = (fallback_name or '').lower()
+    if not is_etf and any(token in name_text for token in ['etf', 'index', 'fund', 'spdr', 'ishares', 'vanguard', 'invesco']):
+        is_etf = True
+
+    metadata = {
+        'sector': sector or 'Uncategorized',
+        'isEtf': is_etf
+    }
+    asset_metadata_cache[symbol] = metadata
+    return metadata
 
 def get_stock_ages():
     """Fetch earliest order date and account age for each individual stock"""
@@ -208,16 +314,23 @@ def calculate_xirr_investments(stocks_data, individual_orders):
     
     for item in stocks_data:
         symbol = item['Symbol']
-        investments.append(-1 * sum(individual_orders[symbol][1]))
+        symbol_orders = individual_orders.get(symbol, [[], []])
+        dates_for_symbol = symbol_orders[0]
+        amounts_for_symbol = symbol_orders[1]
+
+        investments.append(-1 * sum(amounts_for_symbol))
         
         # Create a copy for XIRR calculation
-        dates_copy = individual_orders[symbol][0].copy()
-        amounts_copy = individual_orders[symbol][1].copy()
+        dates_copy = dates_for_symbol.copy()
+        amounts_copy = amounts_for_symbol.copy()
         
         dates_copy.append(today_date)
         amounts_copy.append(item['Current Value'])
-        
-        xirr_values.append(xirr(dates_copy, amounts_copy))
+
+        try:
+            xirr_values.append(float(xirr(dates_copy, amounts_copy)))
+        except Exception:
+            xirr_values.append(0.0)
     
     # Calculate overall XIRR
     all_dates = []
@@ -230,13 +343,19 @@ def calculate_xirr_investments(stocks_data, individual_orders):
     # Add current total value
     all_dates.append(today_date)
     all_amounts.append(sum([s['Current Value'] for s in stocks_data]))
-    
-    overall_xirr = xirr(sorted(zip(all_dates, all_amounts)))
+
+    try:
+        overall_xirr = float(xirr(all_dates, all_amounts))
+    except Exception:
+        overall_xirr = 0.0
     
     return overall_xirr, xirr_values, investments
 
 def calculate_sp500_comparison(start_date, total_investment):
     """Calculate S&P 500 performance with SIP strategy"""
+    if total_investment <= 0:
+        return None
+
     # Download S&P 500 data
     sp500 = yf.Ticker("^GSPC")
     
@@ -292,7 +411,10 @@ def calculate_sp500_comparison(start_date, total_investment):
     sip_amounts.append(current_value)
     
     # Calculate XIRR for S&P 500
-    sp500_xirr = xirr(sip_dates, sip_amounts)
+    try:
+        sp500_xirr = float(xirr(sip_dates, sip_amounts))
+    except Exception:
+        sp500_xirr = 0.0
     
     profit_loss = current_value - total_invested
     
@@ -350,6 +472,7 @@ def get_historical_performance(individual_orders, start_date):
     cumulative_investment = 0
     sp500_shares = 0
     sp500_investment = 0
+    processed_transaction_dates = set()
     
     # Sample weekly
     while current_date <= today:
@@ -357,8 +480,9 @@ def get_historical_performance(individual_orders, start_date):
         
         # Add any transactions up to this date
         for trans_date, amount in transactions:
-            if trans_date <= date_str and trans_date not in [d for d, _ in historical_data]:
+            if trans_date <= date_str and trans_date not in processed_transaction_dates:
                 cumulative_investment += abs(amount)
+                processed_transaction_dates.add(trans_date)
                 
                 # For S&P 500, buy shares at the price on transaction date
                 closest_sp500_date = sp500_hist.index[sp500_hist.index >= trans_date]
@@ -389,6 +513,68 @@ def get_historical_performance(individual_orders, start_date):
     
     return historical_data
 
+def get_monthly_cash_flows(individual_orders):
+    """Aggregate buy/sell/net cash flows by month across all stock transactions."""
+    monthly_totals = defaultdict(lambda: {
+        'buy': 0.0,
+        'sell': 0.0,
+        'net': 0.0
+    })
+
+    for dates, amounts in individual_orders.values():
+        for date_str, amount in zip(dates, amounts):
+            try:
+                month_key = datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m')
+            except Exception:
+                continue
+
+            if amount < 0:
+                monthly_totals[month_key]['buy'] += abs(amount)
+            else:
+                monthly_totals[month_key]['sell'] += amount
+
+    results = []
+    for month_key in sorted(monthly_totals.keys()):
+        buy_value = monthly_totals[month_key]['buy']
+        sell_value = monthly_totals[month_key]['sell']
+        net_value = sell_value - buy_value
+
+        display_month = datetime.strptime(month_key, '%Y-%m').strftime('%b %Y')
+        results.append({
+            'month': display_month,
+            'buy': buy_value,
+            'sell': sell_value,
+            'net': net_value
+        })
+
+    return results
+
+def get_cash_flow_transactions(individual_orders):
+    """Flatten individual orders into date-sorted cash flow transactions.
+
+    Amount convention:
+    - Negative amount => cash outflow (buy)
+    - Positive amount => cash inflow (sell)
+    """
+    transactions = []
+
+    for symbol, (dates, amounts) in individual_orders.items():
+        for date_str, amount in zip(dates, amounts):
+            try:
+                # Normalize to deterministic UTC date-only string.
+                normalized_date = datetime.strptime(date_str, '%Y-%m-%d').strftime('%Y-%m-%d')
+            except Exception:
+                continue
+
+            transactions.append({
+                'date': normalized_date,
+                'amount': float(amount),
+                'symbol': symbol
+            })
+
+    transactions.sort(key=lambda row: row['date'])
+    return transactions
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
     global logged_in, login_token
@@ -412,10 +598,10 @@ if __name__ == '__main__':
     print("=" * 60)
     print("🚀 Robinhood Portfolio Tracker Server Starting...")
     print("=" * 60)
-    print(f"\n📊 Dashboard available at: http://localhost:5000")
-    print(f"🔧 API endpoint: http://localhost:5000/api")
+    print(f"\n📊 Dashboard available at: http://localhost:5005")
+    print(f"🔧 API endpoint: http://localhost:5005/api")
     print(f"\n💡 Make sure 'index.html' is in the same directory as this script")
     print(f"\n⚠️  Press Ctrl+C to stop the server\n")
     print("=" * 60 + "\n")
     
-    app.run(debug=True, port=5000, host='0.0.0.0')
+    app.run(debug=True, port=5005, host='0.0.0.0')
