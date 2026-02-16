@@ -3,10 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Robinhood Portfolio Tracker</title>
+    <title>Ravenhood</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
+        :root {
+            --bg-dark: #020617;
+            --bg-mid: #0b1220;
+            --glass-bg: rgba(15, 23, 42, 0.55);
+            --glass-strong: rgba(15, 23, 42, 0.78);
+            --glass-border: rgba(34, 211, 238, 0.22);
+            --neon-green: #22c55e;
+            --neon-blue: #22d3ee;
+            --text-soft: #93c5fd;
+        }
+        body {
+            background:
+                radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.14), transparent 42%),
+                radial-gradient(circle at 85% 100%, rgba(34, 197, 94, 0.14), transparent 36%),
+                linear-gradient(160deg, var(--bg-dark), var(--bg-mid) 52%, var(--bg-dark));
+            color: #e2e8f0;
+        }
+        .glass-panel {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 12px 40px rgba(2, 6, 23, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .glass-strong {
+            background: var(--glass-strong);
+            border: 1px solid rgba(34, 211, 238, 0.3);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 40px rgba(2, 6, 23, 0.45);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+        }
+        .neon-text {
+            color: var(--neon-blue);
+            text-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
+        }
+        .hacker-accent {
+            color: #86efac;
+            text-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
+        }
+        .raven-title {
+            font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, Menlo, Monaco, monospace;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
+            background: linear-gradient(90deg, #86efac 0%, #34d399 36%, #22d3ee 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 24px rgba(34, 211, 238, 0.24);
+        }
+        .raven-subline {
+            color: #67e8f9;
+            font-size: 0.75rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0.85;
+        }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-10px); }
@@ -23,108 +81,146 @@
         }
     </style>
 </head>
-<body class="bg-gray-900">
+<body>
     <!-- Login View -->
-    <div id="loginView" class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
-                <div class="inline-block p-3 bg-green-900/50 rounded-full mb-4">
-                    <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <div class="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 border border-cyan-400/35 rounded-full mb-4 shadow-[0_0_28px_rgba(34,211,238,0.25)]">
+                    <i class="fa-solid fa-crow text-cyan-300 text-2xl" aria-hidden="true"></i>
                 </div>
-                <h1 class="text-3xl font-bold text-white mb-2">Robinhood Portfolio</h1>
-                <p class="text-gray-400">Track your investments with detailed analytics</p>
+                <h1 class="raven-title text-4xl mb-1">Ravenhood</h1>
+                <p class="text-slate-300">A better Robinhood dashboard with advanced analytics</p>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition" placeholder="Enter your username">
+                    <label class="block text-sm font-medium text-cyan-100 mb-2">Username</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter your username">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
-                    <input type="password" id="password" class="w-full px-4 py-3 bg-gray-700 border border-gray-600 text-white rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition" placeholder="Enter your password">
+                    <label class="block text-sm font-medium text-cyan-100 mb-2">Password</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter your password">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-cyan-100 mb-2">2FA Code (Optional)</label>
+                    <input type="text" id="mfaCode" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter Robinhood verification code if prompted">
                 </div>
 
                 <div id="errorMsg" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm"></div>
 
-                <button onclick="handleLogin()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition duration-200">
-                    Login to Robinhood
+                <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-semibold py-3 px-4 rounded-lg transition duration-200">
+                    Login to Ravenhood
                 </button>
             </div>
 
-            <div class="mt-6 p-4 bg-blue-900/30 border border-blue-700/50 rounded-lg">
-                <p class="text-xs text-blue-300">
+            <div class="mt-6 p-4 bg-cyan-950/30 border border-cyan-500/35 rounded-lg">
+                <p class="text-xs text-cyan-200">
                     <strong>Security Note:</strong> Your credentials are sent to the local backend server running on your machine. 
-                    Make sure the Flask server is running on port 5000.
+                    Make sure the Flask server is running on port 5005.
                 </p>
             </div>
         </div>
     </div>
 
     <!-- Waiting View -->
-    <div id="waitingView" class="hidden min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 flex items-center justify-center p-4">
-        <div class="bg-gray-800 border border-gray-700 rounded-2xl shadow-2xl p-12 w-full max-w-md text-center">
-            <div class="inline-block p-4 bg-green-900/50 rounded-full mb-6 animate-pulse">
-                <svg class="w-12 h-12 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div id="waitingView" class="hidden min-h-screen flex items-center justify-center p-4">
+        <div class="glass-strong rounded-2xl p-12 w-full max-w-md text-center">
+            <div class="inline-block p-4 bg-emerald-500/10 border border-emerald-300/30 rounded-full mb-6 animate-pulse">
+                <svg class="w-12 h-12 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                 </svg>
             </div>
             <h2 id="waitingTitle" class="text-2xl font-bold text-white mb-4">Waiting for Approval</h2>
-            <p id="waitingMessage" class="text-gray-400 mb-6">Check Robinhood for approval to continue...</p>
+            <p id="waitingMessage" class="text-slate-300 mb-6">Check Robinhood for approval to continue...</p>
             <div class="flex justify-center space-x-2">
-                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                <div class="w-3 h-3 bg-green-500 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
+                <div class="w-3 h-3 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
+                <div class="w-3 h-3 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
+                <div class="w-3 h-3 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
             </div>
         </div>
     </div>
 
     <!-- Dashboard View -->
-    <div id="dashboardView" class="hidden min-h-screen bg-gray-900 p-4 md:p-8">
+    <div id="dashboardView" class="hidden min-h-screen p-4 md:p-8">
         <div class="max-w-7xl mx-auto">
-            <div class="mb-8">
-                <h1 class="text-4xl font-bold text-white mb-2">Portfolio Dashboard</h1>
-                <p class="text-gray-400">Real-time view of your Robinhood investments</p>
+            <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="inline-flex items-center justify-center w-12 h-12 bg-cyan-500/10 border border-cyan-400/35 rounded-xl shadow-[0_0_28px_rgba(34,211,238,0.2)]">
+                        <i class="fa-solid fa-crow text-cyan-300 text-xl" aria-hidden="true"></i>
+                    </div>
+                    <div>
+                        <h1 class="raven-title text-5xl mb-1">Ravenhood</h1>
+                        <p class="text-slate-300">Real-time view of your portfolio with benchmark intelligence</p>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-lg px-3 py-2 w-full md:w-auto">
+                    <label for="paletteSelect" class="block text-[11px] uppercase tracking-wide text-cyan-200 mb-1">Color scheme</label>
+                    <select id="paletteSelect" class="w-full md:w-48 bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400"></select>
+                </div>
             </div>
 
-            <!-- Top Section: Summary Cards and Pie Chart -->
             <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-                <!-- Summary Cards (4 columns) -->
-                <div class="lg:col-span-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <div id="summaryCards"></div>
+                <div class="lg:col-span-2">
+                    <div id="summaryCards" class="grid grid-cols-1 gap-4"></div>
                 </div>
-                
-                <!-- Pie Chart (1 column) -->
-                <div class="lg:col-span-1 bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-4">
-                    <h2 class="text-sm font-bold text-white mb-2 text-center">Allocation</h2>
-                    <div style="position: relative; height: 200px;">
+                <div class="lg:col-span-3 glass-panel rounded-xl p-4 md:p-6">
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                        <div>
+                            <h2 class="text-lg font-bold neon-text">Portfolio Distribution</h2>
+                            <p id="allocationBreadcrumb" class="text-xs text-slate-300 mt-1">Overview</p>
+                        </div>
+                        <button id="allocationBackBtn" type="button" class="hidden px-3 py-1.5 text-xs bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition">
+                            Back
+                        </button>
+                    </div>
+                    <div style="position: relative; height: 460px;">
                         <canvas id="allocationChart"></canvas>
                     </div>
+                    <div id="allocationLegendList" class="mt-4 space-y-1"></div>
                 </div>
             </div>
 
             <!-- S&P 500 Comparison -->
-            <div id="sp500Card" class="hidden bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-xl shadow-lg p-6 mb-8"></div>
+            <div id="sp500Card" class="hidden glass-panel rounded-xl p-6 mb-8"></div>
 
             <!-- Performance Chart -->
-            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6 mb-8">
+            <div class="glass-panel rounded-xl p-6 mb-8">
                 <h2 class="text-xl font-bold text-white mb-4">Performance vs S&P 500</h2>
                 <div style="height: 400px;">
                     <canvas id="performanceChart"></canvas>
                 </div>
             </div>
 
+            <!-- Monthly Cash Flows -->
+            <div id="monthlyCashFlowCard" class="hidden glass-panel rounded-xl p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+                    <h2 class="text-xl font-bold text-white">Monthly Cash Flows</h2>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="cashFlowViewSelect" class="bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400">
+                            <option value="inflowOutflow">View: Inflow / Outflow</option>
+                            <option value="net">View: Net</option>
+                        </select>
+                        <select id="outflowModeSelect" class="bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400">
+                            <option value="negative">Outflow: Negative</option>
+                            <option value="magnitude">Outflow: Positive Magnitude</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="height: 320px;"><canvas id="cashFlowChart"></canvas></div>
+                <p class="text-xs text-slate-300 mt-3">Inflow = cash received from sells. Outflow = cash spent on buys.</p>
+            </div>
+
             <!-- Holdings Table -->
-            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg overflow-hidden">
-                <div class="p-6 border-b border-gray-700">
+            <div class="glass-panel rounded-xl overflow-hidden">
+                <div class="p-6 border-b border-cyan-500/20">
                     <h2 class="text-xl font-bold text-white">Stock Holdings</h2>
                 </div>
                 <div class="overflow-x-auto">
                     <table class="w-full">
-                        <thead class="bg-gray-900">
+                        <thead class="bg-slate-900/80">
                             <tr>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Stock</th>
                                 <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Quantity</th>
@@ -133,27 +229,453 @@
                                 <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Investment</th>
                                 <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Value</th>
                                 <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">P&L</th>
+                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">
+                                    <button id="sortReturnBtn" type="button" class="inline-flex items-center gap-1 hover:text-cyan-300 transition">
+                                        Return (%)
+                                        <span id="sortReturnIndicator" class="text-cyan-300">↕</span>
+                                    </button>
+                                </th>
                                 <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">XIRR</th>
                                 <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Time Held</th>
                             </tr>
                         </thead>
-                        <tbody id="holdingsTableBody" class="divide-y divide-gray-700"></tbody>
+                        <tbody id="holdingsTableBody" class="divide-y divide-cyan-500/15"></tbody>
                     </table>
                 </div>
             </div>
 
             <div class="mt-8 text-center">
-                <button onclick="handleLogout()" class="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white font-semibold rounded-lg transition duration-200">
+                <button onclick="handleLogout()" class="px-6 py-3 bg-slate-800/90 hover:bg-slate-700 border border-cyan-500/35 text-cyan-100 font-semibold rounded-lg transition duration-200">
                     Logout
                 </button>
             </div>
         </div>
     </div>
 
+    <script src="/static/palettes.js"></script>
     <script>
-        const API_URL = 'http://localhost:5000/api';
+        const API_URL = 'http://localhost:5005/api';
         let allocationChartInstance = null;
         let performanceChartInstance = null;
+        let cashFlowChartInstance = null;
+        let dashboardControlsInitialized = false;
+        let currentPalette = localStorage.getItem('allocationPalette') || 'vibrant';
+        let cashFlowView = localStorage.getItem('cashFlowView') || 'inflowOutflow';
+        let outflowMode = localStorage.getItem('outflowMode') || 'negative';
+        let currentCashFlowTransactions = [];
+        let currentMonthlyCashFlows = [];
+        let currentStocksForAllocation = [];
+        let currentSp500Holding = null;
+        let currentAllocationColorsBySymbol = {};
+        let currentAllocationSlices = [];
+        let allocationViewState = { mode: 'overview', key: null };
+        let holdingsSort = { key: 'simpleReturnPct', direction: null };
+        const MAX_ALLOCATION_SLICES = 10;
+        const MAX_ETF_BREAKDOWN_SLICES = 8;
+
+        if (typeof window.getColorForIndex !== 'function' || !window.PALETTES) {
+            window.PALETTES = {
+                vibrant: {
+                    label: 'Vibrant',
+                    colors: ['#22D3EE', '#34D399', '#38BDF8', '#A3E635', '#14B8A6', '#2DD4BF', '#818CF8', '#F59E0B', '#F97316', '#06B6D4']
+                },
+                muted: {
+                    label: 'Muted',
+                    colors: ['#67E8F9', '#6EE7B7', '#7DD3FC', '#BEF264', '#5EEAD4', '#93C5FD', '#A7F3D0', '#FDE68A', '#FDBA74', '#99F6E4']
+                },
+                colorblind: {
+                    label: 'Colorblind Friendly',
+                    colors: ['#0072B2', '#009E73', '#56B4E9', '#CC79A7', '#F0E442', '#D55E00', '#332288', '#88CCEE', '#44AA99', '#117733']
+                }
+            };
+
+            window.getColorForIndex = function getColorForIndex(paletteName, index) {
+                const palette = window.PALETTES[paletteName] || window.PALETTES.vibrant;
+                const colors = palette.colors;
+                return colors[index % colors.length];
+            };
+        }
+
+        if (!window.ALLOCATION_PALETTE) {
+            window.ALLOCATION_PALETTE = {
+                name: 'Okabe-Ito Dark Safe',
+                etfBase: '#0072B2',
+                sectorColors: ['#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56B4E9', '#F0E442', '#9467BD', '#66A61E', '#8C564B', '#999999'],
+                otherColor: '#7A7A7A',
+                separatorStroke: 'rgba(148, 163, 184, 0.45)'
+            };
+        }
+
+        if (typeof window.getSectorColorForIndex !== 'function') {
+            window.getSectorColorForIndex = function getSectorColorForIndex(index) {
+                return window.ALLOCATION_PALETTE.sectorColors[index % window.ALLOCATION_PALETTE.sectorColors.length];
+            };
+        }
+
+        if (typeof window.getEtfShadeColor !== 'function') {
+            window.getEtfShadeColor = function getEtfShadeColor(index, total) {
+                const blueFamily = ['#005A8D', '#0072B2', '#1C8CD2', '#38A8E8', '#67C0F2', '#94D6FA', '#2E73A6', '#4B9BCF'];
+                return blueFamily[index % blueFamily.length];
+            };
+        }
+
+        if (typeof window.sectorPalette !== 'function') {
+            window.sectorPalette = function sectorPalette() {
+                return [...window.ALLOCATION_PALETTE.sectorColors];
+            };
+        }
+
+        if (typeof window.etfHueRamp !== 'function') {
+            window.etfHueRamp = function etfHueRamp(baseColor, count) {
+                const safeCount = Math.max(1, count);
+                const startL = 34;
+                const endL = 66;
+                const saturation = 74;
+                const hue = 208;
+                return Array.from({ length: safeCount }, (_, index) => {
+                    const ratio = safeCount === 1 ? 0.5 : index / (safeCount - 1);
+                    const lightness = Math.round(startL + (endL - startL) * ratio);
+                    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                });
+            };
+        }
+
+        function monthLabelFromKey(monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const dt = new Date(Date.UTC(year, month - 1, 1));
+            return dt.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
+        }
+
+        function normalizeDateToMonthKey(dateStr) {
+            if (!dateStr || dateStr.length < 7) {
+                return null;
+            }
+            return dateStr.slice(0, 7);
+        }
+
+        function nextMonthKey(monthKey) {
+            const [year, month] = monthKey.split('-').map(Number);
+            const nextMonth = month === 12 ? 1 : month + 1;
+            const nextYear = month === 12 ? year + 1 : year;
+            return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
+        }
+
+        function aggregateCashFlowsByMonth(transactions) {
+            if (!transactions || transactions.length === 0) {
+                return [];
+            }
+
+            const totalsByMonth = {};
+            const monthKeys = [];
+
+            transactions.forEach((tx) => {
+                const monthKey = normalizeDateToMonthKey(tx.date);
+                if (!monthKey) {
+                    return;
+                }
+
+                if (!totalsByMonth[monthKey]) {
+                    totalsByMonth[monthKey] = {
+                        monthKey,
+                        monthLabel: monthLabelFromKey(monthKey),
+                        inflow: 0,
+                        outflowAbs: 0,
+                        outflowNegative: 0,
+                        net: 0
+                    };
+                    monthKeys.push(monthKey);
+                }
+
+                const amount = Number(tx.amount) || 0;
+                if (amount >= 0) {
+                    totalsByMonth[monthKey].inflow += amount;
+                } else {
+                    totalsByMonth[monthKey].outflowAbs += Math.abs(amount);
+                    totalsByMonth[monthKey].outflowNegative += amount;
+                }
+                totalsByMonth[monthKey].net += amount;
+            });
+
+            monthKeys.sort();
+            if (monthKeys.length === 0) {
+                return [];
+            }
+
+            const filledMonths = [];
+            let cursor = monthKeys[0];
+            const end = monthKeys[monthKeys.length - 1];
+
+            while (cursor <= end) {
+                if (!totalsByMonth[cursor]) {
+                    totalsByMonth[cursor] = {
+                        monthKey: cursor,
+                        monthLabel: monthLabelFromKey(cursor),
+                        inflow: 0,
+                        outflowAbs: 0,
+                        outflowNegative: 0,
+                        net: 0
+                    };
+                }
+                filledMonths.push(totalsByMonth[cursor]);
+                cursor = nextMonthKey(cursor);
+            }
+
+            return filledMonths;
+        }
+
+        function aggregateFromMonthlySummaryRows(monthlyRows) {
+            if (!monthlyRows || monthlyRows.length === 0) {
+                return [];
+            }
+            return monthlyRows.map((row, idx) => ({
+                monthKey: `${idx}`,
+                monthLabel: row.month,
+                inflow: Number(row.sell) || 0,
+                outflowAbs: Number(row.buy) || 0,
+                outflowNegative: -1 * (Number(row.buy) || 0),
+                net: Number(row.net) || 0
+            }));
+        }
+
+        function computeSimpleReturnPct(holding) {
+            // Simple Return (%) = Profit/Loss ÷ InvestedAmount × 100
+            // Uses current modeled invested basis from `holding.investment`.
+            const investedAmount = Number(holding?.investment) || 0;
+            if (investedAmount === 0) {
+                return null;
+            }
+            const profitLoss = Number(holding?.profitLoss) || 0;
+            return (profitLoss / investedAmount) * 100;
+        }
+
+        function formatSimpleReturn(value) {
+            if (value === null || Number.isNaN(value)) {
+                return '—';
+            }
+            const sign = value >= 0 ? '+' : '';
+            return `${sign}${value.toFixed(2)}%`;
+        }
+
+        function isEtfHolding(stock) {
+            const name = (stock.name || '').toLowerCase();
+            if (stock.isEtf === true) return true;
+            return /\betf\b|index|fund|spdr|ishares|vanguard|invesco/.test(name);
+        }
+
+        function normalizeSectorName(stock) {
+            const rawSector = (stock.sector || '').trim();
+            return rawSector || 'Uncategorized';
+        }
+
+        function capSlices(items, maxSlices, otherLabel = 'Other') {
+            const sorted = [...items].sort((a, b) => b.value - a.value);
+            if (sorted.length <= maxSlices) {
+                return sorted;
+            }
+
+            const keepCount = Math.max(1, maxSlices - 1);
+            const kept = sorted.slice(0, keepCount);
+            const rest = sorted.slice(keepCount);
+            const otherValue = rest.reduce((sum, item) => sum + item.value, 0);
+            const otherSymbols = rest.flatMap((item) => item.symbols || []);
+
+            if (otherValue > 0) {
+                kept.push({
+                    label: otherLabel,
+                    value: otherValue,
+                    symbols: otherSymbols,
+                    drilldownType: null,
+                    drilldownKey: null
+                });
+            }
+
+            return kept;
+        }
+
+        function buildOverviewSlices(stocks) {
+            const etfStocks = stocks.filter(isEtfHolding);
+            const nonEtfStocks = stocks.filter((stock) => !isEtfHolding(stock));
+
+            const slices = [];
+            if (etfStocks.length > 0) {
+                slices.push({
+                    label: 'ETFs',
+                    value: etfStocks.reduce((sum, stock) => sum + stock.currentValue, 0),
+                    symbols: etfStocks.map((stock) => stock.symbol),
+                    drilldownType: 'etf',
+                    drilldownKey: 'ETFs',
+                    bucketType: 'etf'
+                });
+            }
+
+            const sectorMap = {};
+            nonEtfStocks.forEach((stock) => {
+                const sector = normalizeSectorName(stock);
+                if (!sectorMap[sector]) {
+                    sectorMap[sector] = { value: 0, symbols: [] };
+                }
+                sectorMap[sector].value += stock.currentValue;
+                sectorMap[sector].symbols.push(stock.symbol);
+            });
+
+            Object.entries(sectorMap).forEach(([sector, info]) => {
+                slices.push({
+                    label: sector,
+                    value: info.value,
+                    symbols: info.symbols,
+                    drilldownType: 'sector',
+                    drilldownKey: sector,
+                    bucketType: 'sector'
+                });
+            });
+
+            return capSlices(slices.filter((slice) => slice.value > 0), MAX_ALLOCATION_SLICES, 'Other');
+        }
+
+        function buildEtfBreakdownSlices(stocks) {
+            const etfStocks = stocks.filter(isEtfHolding);
+            const items = etfStocks.map((stock) => ({
+                label: stock.symbol,
+                value: stock.currentValue,
+                symbols: [stock.symbol],
+                drilldownType: null,
+                drilldownKey: null,
+                bucketType: 'etf-detail'
+            }));
+
+            return capSlices(items.filter((item) => item.value > 0), MAX_ETF_BREAKDOWN_SLICES, 'Other ETFs');
+        }
+
+        function buildDrilldownSlices(stocks, type, key) {
+            let scoped = [];
+            if (type === 'etf') {
+                scoped = stocks.filter(isEtfHolding);
+            } else if (type === 'sector') {
+                scoped = stocks.filter((stock) => !isEtfHolding(stock) && normalizeSectorName(stock) === key);
+            }
+
+            const items = scoped.map((stock) => ({
+                label: stock.symbol,
+                value: stock.currentValue,
+                symbols: [stock.symbol],
+                drilldownType: null,
+                drilldownKey: null,
+                bucketType: type === 'etf' ? 'etf-detail' : 'sector-detail'
+            }));
+
+            return capSlices(items.filter((item) => item.value > 0), MAX_ALLOCATION_SLICES, type === 'etf' ? 'Other ETFs' : 'Other');
+        }
+
+        function getAllocationSlices(stocks) {
+            if (allocationViewState.mode === 'overview') {
+                const overviewSlices = buildOverviewSlices(stocks);
+                const etfBreakdownSlices = buildEtfBreakdownSlices(stocks);
+                return {
+                    innerSlices: overviewSlices,
+                    outerSlices: etfBreakdownSlices,
+                    legendSlices: overviewSlices
+                };
+            }
+            const detailSlices = buildDrilldownSlices(stocks, allocationViewState.mode, allocationViewState.key);
+            return {
+                innerSlices: detailSlices,
+                outerSlices: [],
+                legendSlices: detailSlices
+            };
+        }
+
+        function updateAllocationNavigationUI() {
+            const breadcrumb = document.getElementById('allocationBreadcrumb');
+            const backBtn = document.getElementById('allocationBackBtn');
+            if (!breadcrumb || !backBtn) return;
+
+            if (allocationViewState.mode === 'overview') {
+                breadcrumb.textContent = 'Overview';
+                backBtn.classList.add('hidden');
+                return;
+            }
+
+            if (allocationViewState.mode === 'etf') {
+                breadcrumb.textContent = 'Overview / ETFs';
+            } else {
+                breadcrumb.textContent = `Overview / ${allocationViewState.key}`;
+            }
+            backBtn.classList.remove('hidden');
+        }
+
+        function simpleHash(input) {
+            let hash = 0;
+            const value = String(input || '');
+            for (let i = 0; i < value.length; i += 1) {
+                hash = ((hash << 5) - hash) + value.charCodeAt(i);
+                hash |= 0;
+            }
+            return Math.abs(hash);
+        }
+
+        const allocationCenterLabelPlugin = {
+            id: 'allocationCenterLabel',
+            afterDraw(chart) {
+                if (!chart || chart.canvas?.id !== 'allocationChart') {
+                    return;
+                }
+
+                const info = chart.$allocationInfo;
+                if (!info) {
+                    return;
+                }
+
+                const { innerSlices, hoverItem } = info;
+                const total = innerSlices.reduce((sum, slice) => sum + slice.value, 0);
+                const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
+                const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
+                const ctx = chart.ctx;
+
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.fillStyle = 'rgba(148, 163, 184, 0.95)';
+                ctx.font = '600 11px system-ui, -apple-system, Segoe UI, sans-serif';
+                ctx.fillText('Total Investment', centerX, centerY - 10);
+
+                ctx.fillStyle = '#E2E8F0';
+                ctx.font = '700 15px system-ui, -apple-system, Segoe UI, sans-serif';
+                ctx.fillText(formatCurrency(total), centerX, centerY + 12);
+
+                if (hoverItem && hoverItem.name) {
+                    const hoverText = `${hoverItem.name} • ${hoverItem.percentage}%`;
+                    ctx.fillStyle = 'rgba(186, 230, 253, 0.95)';
+                    ctx.font = '600 11px system-ui, -apple-system, Segoe UI, sans-serif';
+                    ctx.fillText(hoverText, centerX, centerY + 32);
+                }
+                ctx.restore();
+            }
+        };
+
+        const hoverCrosshairPlugin = {
+            id: 'hoverCrosshair',
+            afterDraw(chart) {
+                if (chart.config.type !== 'line') return;
+                const tooltip = chart.tooltip;
+                if (!tooltip || !tooltip._active || !tooltip._active.length) return;
+
+                const ctx = chart.ctx;
+                const x = tooltip._active[0].element.x;
+                const topY = chart.scales.y.top;
+                const bottomY = chart.scales.y.bottom;
+
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x, topY);
+                ctx.lineTo(x, bottomY);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
+                ctx.setLineDash([4, 5]);
+                ctx.stroke();
+                ctx.restore();
+            }
+        };
+
+        Chart.register(hoverCrosshairPlugin, allocationCenterLabelPlugin);
 
         function showView(view) {
             document.getElementById('loginView').classList.add('hidden');
@@ -186,6 +708,7 @@
         async function handleLogin() {
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const mfaCode = document.getElementById('mfaCode').value;
 
             if (!username || !password) {
                 showError('Please enter both username and password');
@@ -203,7 +726,7 @@
                 const response = await fetch(`${API_URL}/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({ username, password, mfa_code: mfaCode })
                 });
 
                 const data = await response.json();
@@ -221,7 +744,7 @@
                             renderDashboard(portfolioData.data);
                             showView('dashboard');
                         } else {
-                            showError('Failed to fetch portfolio data');
+                            showError(portfolioData.message || 'Failed to fetch portfolio data');
                             showView('login');
                         }
                     } catch (err) {
@@ -233,7 +756,7 @@
                     showView('login');
                 }
             } catch (err) {
-                showError('Connection error. Make sure the backend server is running on port 5000.');
+                showError('Connection error. Make sure the backend server is running on port 5005.');
                 showView('login');
             }
         }
@@ -242,30 +765,51 @@
             await fetch(`${API_URL}/logout`, { method: 'POST' });
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
+            document.getElementById('mfaCode').value = '';
             showView('login');
         }
 
         function renderDashboard(data) {
-            const { stocks, sp500, totalInvestment, totalCurrentValue, totalProfitLoss, overallXirr, historicalData } = data;
-            const totalReturn = (totalProfitLoss / totalInvestment) * 100;
+            const {
+                stocks,
+                sp500,
+                totalInvestment,
+                totalCurrentValue,
+                totalProfitLoss,
+                overallXirr,
+                historicalData,
+                monthlyCashFlows,
+                cashFlowTransactions
+            } = data;
+            const totalReturn = totalInvestment > 0 ? (totalProfitLoss / totalInvestment) * 100 : 0;
+
+            currentCashFlowTransactions = cashFlowTransactions || [];
+            currentMonthlyCashFlows = monthlyCashFlows || [];
+            currentStocksForAllocation = stocks || [];
+            currentSp500Holding = sp500 || null;
+
+            if (!dashboardControlsInitialized) {
+                initializeDashboardControls();
+                dashboardControlsInitialized = true;
+            }
 
             // Render summary cards
             const summaryHTML = `
-                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                <div class="glass-panel rounded-xl p-6">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-400 text-sm font-medium">Total Investment</span>
+                        <span class="text-cyan-100 text-sm font-medium">Total Investment</span>
                     </div>
                     <p class="text-2xl font-bold text-white">${formatCurrency(totalInvestment)}</p>
                 </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                <div class="glass-panel rounded-xl p-6">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-400 text-sm font-medium">Current Value</span>
+                        <span class="text-cyan-100 text-sm font-medium">Current Value</span>
                     </div>
                     <p class="text-2xl font-bold text-white">${formatCurrency(totalCurrentValue)}</p>
                 </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                <div class="glass-panel rounded-xl p-6">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-400 text-sm font-medium">Total P&L</span>
+                        <span class="text-cyan-100 text-sm font-medium">Total P&L</span>
                     </div>
                     <p class="text-2xl font-bold ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
                         ${formatCurrency(totalProfitLoss)}
@@ -274,12 +818,12 @@
                         ${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%
                     </p>
                 </div>
-                <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-lg p-6">
+                <div class="glass-panel rounded-xl p-6">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-gray-400 text-sm font-medium">Overall XIRR</span>
+                        <span class="text-cyan-100 text-sm font-medium">Overall XIRR</span>
                     </div>
-                    <p class="text-2xl font-bold text-purple-400">${formatPercent(overallXirr)}</p>
-                    <p class="text-xs text-gray-500 mt-1">Annualized return</p>
+                    <p class="text-2xl font-bold neon-text">${formatPercent(overallXirr)}</p>
+                    <p class="text-xs text-slate-400 mt-1">Annualized return</p>
                 </div>
             `;
             document.getElementById('summaryCards').innerHTML = summaryHTML;
@@ -290,21 +834,21 @@
                     <h3 class="text-lg font-bold text-white mb-4">📊 S&P 500 Benchmark Comparison</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <p class="text-gray-400 text-xs mb-1">S&P 500 Value</p>
+                            <p class="text-slate-300 text-xs mb-1">S&P 500 Value</p>
                             <p class="text-white font-bold">${formatCurrency(sp500.currentValue)}</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 text-xs mb-1">S&P 500 P&L</p>
+                            <p class="text-slate-300 text-xs mb-1">S&P 500 P&L</p>
                             <p class="font-bold ${sp500.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
                                 ${formatCurrency(sp500.profitLoss)}
                             </p>
                         </div>
                         <div>
-                            <p class="text-gray-400 text-xs mb-1">S&P 500 XIRR</p>
-                            <p class="text-purple-400 font-bold">${formatPercent(sp500.xirr)}</p>
+                            <p class="text-slate-300 text-xs mb-1">S&P 500 XIRR</p>
+                            <p class="neon-text font-bold">${formatPercent(sp500.xirr)}</p>
                         </div>
                         <div>
-                            <p class="text-gray-400 text-xs mb-1">Portfolio vs S&P 500</p>
+                            <p class="text-slate-300 text-xs mb-1">Portfolio vs S&P 500</p>
                             <p class="font-bold ${overallXirr >= sp500.xirr ? 'text-green-400' : 'text-red-400'}">
                                 ${overallXirr >= sp500.xirr ? '✓ Outperforming' : '✗ Underperforming'}
                             </p>
@@ -319,49 +863,430 @@
             renderAllocationChart(stocks);
             renderPerformanceChart(historicalData || []);
 
+            // Render monthly cash flows
+            renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
+
             // Render holdings table
             renderHoldingsTable(stocks, sp500);
         }
 
+        function initializeDashboardControls() {
+            const paletteSelect = document.getElementById('paletteSelect');
+            const cashFlowViewSelect = document.getElementById('cashFlowViewSelect');
+            const outflowModeSelect = document.getElementById('outflowModeSelect');
+            const sortReturnBtn = document.getElementById('sortReturnBtn');
+            const allocationBackBtn = document.getElementById('allocationBackBtn');
+
+            if (paletteSelect && window.PALETTES) {
+                const paletteOptions = Object.entries(window.PALETTES)
+                    .map(([key, palette]) => `<option value="${key}">${palette.label}</option>`)
+                    .join('');
+                paletteSelect.innerHTML = paletteOptions;
+                if (!window.PALETTES[currentPalette]) {
+                    currentPalette = 'vibrant';
+                }
+                paletteSelect.value = currentPalette;
+                paletteSelect.addEventListener('change', (event) => {
+                    currentPalette = event.target.value;
+                    localStorage.setItem('allocationPalette', currentPalette);
+                    renderAllocationChart(currentStocksForAllocation);
+                });
+            }
+
+            if (cashFlowViewSelect) {
+                cashFlowViewSelect.value = cashFlowView;
+                cashFlowViewSelect.addEventListener('change', (event) => {
+                    cashFlowView = event.target.value;
+                    localStorage.setItem('cashFlowView', cashFlowView);
+                    renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
+                });
+            }
+
+            if (outflowModeSelect) {
+                outflowModeSelect.value = outflowMode;
+                outflowModeSelect.addEventListener('change', (event) => {
+                    outflowMode = event.target.value;
+                    localStorage.setItem('outflowMode', outflowMode);
+                    renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
+                });
+            }
+
+            if (sortReturnBtn) {
+                sortReturnBtn.addEventListener('click', () => {
+                    if (!holdingsSort.direction) {
+                        holdingsSort.direction = 'desc';
+                    } else if (holdingsSort.direction === 'desc') {
+                        holdingsSort.direction = 'asc';
+                    } else {
+                        holdingsSort.direction = null;
+                    }
+                    updateSortIndicator();
+                    renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+                });
+            }
+
+            if (allocationBackBtn) {
+                allocationBackBtn.addEventListener('click', () => {
+                    allocationViewState = { mode: 'overview', key: null };
+                    renderAllocationChart(currentStocksForAllocation);
+                    renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+                });
+            }
+
+            updateSortIndicator();
+            updateAllocationNavigationUI();
+        }
+
+        function updateSortIndicator() {
+            const indicator = document.getElementById('sortReturnIndicator');
+            if (!indicator) {
+                return;
+            }
+            if (!holdingsSort.direction) {
+                indicator.textContent = '↕';
+            } else {
+                indicator.textContent = holdingsSort.direction === 'desc' ? '↓' : '↑';
+            }
+        }
+
+        function renderCashFlowChart(transactions, monthlyRows) {
+            const card = document.getElementById('monthlyCashFlowCard');
+            const canvas = document.getElementById('cashFlowChart');
+            const viewSelect = document.getElementById('cashFlowViewSelect');
+
+            const monthlyData = (transactions && transactions.length > 0)
+                ? aggregateCashFlowsByMonth(transactions)
+                : aggregateFromMonthlySummaryRows(monthlyRows);
+
+            if (!monthlyData || monthlyData.length === 0) {
+                card.classList.add('hidden');
+                if (cashFlowChartInstance) {
+                    cashFlowChartInstance.destroy();
+                    cashFlowChartInstance = null;
+                }
+                return;
+            }
+
+            const labels = monthlyData.map((item) => item.monthLabel);
+            const inflowData = monthlyData.map((item) => item.inflow);
+            const outflowData = monthlyData.map((item) => outflowMode === 'negative' ? item.outflowNegative : item.outflowAbs);
+            const netData = monthlyData.map((item) => item.net);
+
+            const chartDatasets = cashFlowView === 'net'
+                ? [{
+                    label: 'Net Cash Flow',
+                    data: netData,
+                    backgroundColor: netData.map((v) => v >= 0 ? 'rgba(34, 197, 94, 0.72)' : 'rgba(56, 189, 248, 0.72)'),
+                    borderColor: netData.map((v) => v >= 0 ? '#4ADE80' : '#38BDF8'),
+                    borderWidth: 1.5,
+                    borderRadius: 4
+                }]
+                : [
+                    {
+                        label: 'Inflow',
+                        data: inflowData,
+                        backgroundColor: 'rgba(34, 197, 94, 0.72)',
+                        borderColor: '#4ADE80',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    },
+                    {
+                        label: outflowMode === 'negative' ? 'Outflow (Negative)' : 'Outflow (Magnitude)',
+                        data: outflowData,
+                        backgroundColor: 'rgba(56, 189, 248, 0.72)',
+                        borderColor: '#67E8F9',
+                        borderWidth: 1.5,
+                        borderRadius: 4
+                    }
+                ];
+
+            if (cashFlowChartInstance) {
+                cashFlowChartInstance.destroy();
+            }
+
+            cashFlowChartInstance = new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: chartDatasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#BAE6FD'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                            titleColor: '#E2E8F0',
+                            bodyColor: '#BAE6FD',
+                            borderColor: 'rgba(34, 211, 238, 0.35)',
+                            borderWidth: 1,
+                            callbacks: {
+                                title: (tooltipItems) => tooltipItems?.[0]?.label || '',
+                                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`,
+                                afterBody: (tooltipItems) => {
+                                    const index = tooltipItems?.[0]?.dataIndex ?? -1;
+                                    const month = monthlyData[index];
+                                    if (!month) {
+                                        return [];
+                                    }
+                                    return [
+                                        `Inflow: ${formatCurrency(month.inflow)}`,
+                                        `Outflow: ${formatCurrency(month.outflowAbs)}`,
+                                        `Net: ${formatCurrency(month.net)}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: false,
+                            ticks: {
+                                color: '#93C5FD'
+                            },
+                            grid: {
+                                color: 'rgba(56, 189, 248, 0.12)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                color: '#93C5FD',
+                                callback: (value) => formatCurrency(value)
+                            },
+                            grid: {
+                                color: 'rgba(56, 189, 248, 0.12)'
+                            }
+                        }
+                    }
+                }
+            });
+
+            if (viewSelect) {
+                viewSelect.value = cashFlowView;
+            }
+
+            card.classList.remove('hidden');
+        }
+
         function renderAllocationChart(stocks) {
+            if (!stocks || stocks.length === 0) {
+                return;
+            }
+
             const ctx = document.getElementById('allocationChart').getContext('2d');
-            
+
+            const { innerSlices, outerSlices, legendSlices } = getAllocationSlices(stocks);
+            currentAllocationSlices = legendSlices;
+            currentAllocationColorsBySymbol = {};
+
+            const totalPortfolio = innerSlices.reduce((sum, slice) => sum + slice.value, 0);
+
+            const allEtfSymbols = stocks
+                .filter(isEtfHolding)
+                .map((stock) => stock.symbol)
+                .sort((left, right) => left.localeCompare(right));
+
+            const etfRamp = window.etfHueRamp(window.ALLOCATION_PALETTE.etfBase, Math.max(1, allEtfSymbols.length));
+            const etfSymbolShadeMap = {};
+            allEtfSymbols.forEach((symbol) => {
+                const idx = simpleHash(symbol) % etfRamp.length;
+                etfSymbolShadeMap[symbol] = etfRamp[idx];
+            });
+
+            const innerColors = innerSlices.map((slice, index) => {
+                if (allocationViewState.mode === 'etf') {
+                    if (slice.label === 'Other ETFs') {
+                        return window.ALLOCATION_PALETTE.otherColor;
+                    }
+                    const symbol = (slice.symbols || [])[0];
+                    return etfSymbolShadeMap[symbol] || window.getEtfShadeColor(index, innerSlices.length);
+                }
+                if (slice.label === 'ETFs') {
+                    return window.ALLOCATION_PALETTE.etfBase;
+                }
+                if (slice.label === 'Other' || slice.label === 'Other ETFs') {
+                    return window.ALLOCATION_PALETTE.otherColor;
+                }
+                const sectors = window.sectorPalette();
+                return sectors[index % sectors.length];
+            });
+
+            const etfInnerIndex = innerSlices.findIndex((slice) => slice.label === 'ETFs');
+            const etfInnerSlice = etfInnerIndex >= 0 ? innerSlices[etfInnerIndex] : null;
+            const etfRotationStartFraction = etfInnerIndex > 0
+                ? innerSlices.slice(0, etfInnerIndex).reduce((sum, slice) => sum + slice.value, 0) / totalPortfolio
+                : 0;
+            const etfCircumferenceFraction = etfInnerSlice && totalPortfolio > 0
+                ? (etfInnerSlice.value / totalPortfolio)
+                : 0;
+
+            const outerData = outerSlices.map((slice) => slice.value);
+            const outerColorsBase = outerSlices.map((slice, index) => {
+                if (slice.label === 'Other ETFs') {
+                    return window.ALLOCATION_PALETTE.otherColor;
+                }
+                const symbol = (slice.symbols || [])[0];
+                return etfSymbolShadeMap[symbol] || window.getEtfShadeColor(index, outerSlices.length);
+            });
+            const outerBorderColors = outerSlices.map(() => window.ALLOCATION_PALETTE.separatorStroke);
+            const outerBorderWidths = outerSlices.map(() => 1);
+
+            let hoverOuterIndex = null;
+            let computedOuterColors = [...outerColorsBase];
+
+            function updateOuterColorsForHover() {
+                if (hoverOuterIndex === null) {
+                    computedOuterColors = [...outerColorsBase];
+                    return;
+                }
+                computedOuterColors = outerColorsBase.map((color, index) => {
+                    if (index === hoverOuterIndex) return color;
+                    return 'rgba(71, 85, 105, 0.35)';
+                });
+            }
+
+            updateOuterColorsForHover();
+
+            innerSlices.forEach((slice, index) => {
+                (slice.symbols || []).forEach((symbol) => {
+                    if (!currentAllocationColorsBySymbol[symbol]) {
+                        currentAllocationColorsBySymbol[symbol] = innerColors[index];
+                    }
+                });
+            });
+
             if (allocationChartInstance) {
                 allocationChartInstance.destroy();
             }
 
             allocationChartInstance = new Chart(ctx, {
-                type: 'pie',
+                type: 'doughnut',
                 data: {
-                    labels: stocks.map(s => s.symbol),
-                    datasets: [{
-                        data: stocks.map(s => s.currentValue),
-                        backgroundColor: stocks.map(s => s.profitLoss >= 0 ? '#22C55E' : '#EF4444'),
-                        borderColor: '#1F2937',
-                        borderWidth: 2
-                    }]
+                    labels: innerSlices.map((slice) => slice.label),
+                    datasets: [
+                        {
+                            label: 'Overview',
+                            data: innerSlices.map((slice) => slice.value),
+                            backgroundColor: innerColors,
+                            hoverBackgroundColor: innerColors,
+                            borderColor: window.ALLOCATION_PALETTE.separatorStroke,
+                            borderWidth: 1.25,
+                            hoverOffset: 6,
+                            radius: '90%',
+                            cutout: '54%'
+                        },
+                        {
+                            label: 'ETF Breakdown',
+                            data: outerData,
+                            backgroundColor: computedOuterColors,
+                            hoverBackgroundColor: computedOuterColors,
+                            borderColor: outerBorderColors,
+                            borderWidth: outerBorderWidths,
+                            hoverOffset: 2,
+                            radius: '100%',
+                            cutout: '88%',
+                            rotation: -90 + (etfRotationStartFraction * 360),
+                            circumference: etfCircumferenceFraction * 360
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: true,
+                    maintainAspectRatio: false,
+                    cutout: '52%',
+                    onHover: (event, activeElements, chart) => {
+                        const activeOuter = activeElements.find((entry) => entry.datasetIndex === 1);
+                        const nextHoverIndex = activeOuter ? activeOuter.index : null;
+                        if (hoverOuterIndex !== nextHoverIndex) {
+                            hoverOuterIndex = nextHoverIndex;
+                            updateOuterColorsForHover();
+                            chart.data.datasets[1].backgroundColor = computedOuterColors;
+                            chart.data.datasets[1].hoverBackgroundColor = computedOuterColors;
+                            chart.update('none');
+                        }
+
+                        const active = activeElements && activeElements.length > 0 ? activeElements[0] : null;
+                        if (active) {
+                            const point = active;
+                            const slice = point.datasetIndex === 1 ? outerSlices[point.dataIndex] : innerSlices[point.dataIndex];
+                            if (slice) {
+                                const percentage = totalPortfolio > 0 ? ((slice.value / totalPortfolio) * 100).toFixed(1) : '0.0';
+                                chart.$allocationInfo.hoverItem = { name: slice.label, percentage };
+                            }
+                        } else {
+                            chart.$allocationInfo.hoverItem = null;
+                        }
+                    },
+                    onClick: (event, activeElements, chart) => {
+                        if (!activeElements || activeElements.length === 0) return;
+                        const active = activeElements[0];
+                        if (active.datasetIndex !== 0) {
+                            return;
+                        }
+
+                        const index = active.index;
+                        const selectedSlice = innerSlices[index];
+                        if (!selectedSlice || !selectedSlice.drilldownType) {
+                            return;
+                        }
+
+                        allocationViewState = {
+                            mode: selectedSlice.drilldownType,
+                            key: selectedSlice.drilldownKey
+                        };
+                        renderAllocationChart(stocks);
+                        renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+                    },
+                    animation: {
+                        animateScale: true,
+                        duration: 1000
+                    },
                     plugins: {
                         legend: {
                             display: false
                         },
                         tooltip: {
-                            backgroundColor: '#1F2937',
-                            titleColor: '#fff',
-                            bodyColor: '#9CA3AF',
-                            borderColor: '#374151',
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleColor: '#E2E8F0',
+                            bodyColor: '#E2E8F0',
+                            borderColor: 'rgba(148, 163, 184, 0.45)',
                             borderWidth: 1,
+                            filter: (tooltipItem) => {
+                                if (tooltipItem.datasetIndex === 1) {
+                                    return !!outerSlices[tooltipItem.dataIndex];
+                                }
+                                return true;
+                            },
                             callbacks: {
+                                title: function(contextItems) {
+                                    const item = contextItems[0];
+                                    if (item.datasetIndex === 1) {
+                                        const meta = outerSlices[item.dataIndex];
+                                        return meta ? meta.label : '';
+                                    }
+                                    const slice = innerSlices[item.dataIndex];
+                                    return slice ? slice.label : '';
+                                },
                                 label: function(context) {
-                                    const stock = stocks[context.dataIndex];
-                                    const percentage = ((stock.currentValue / stocks.reduce((sum, s) => sum + s.currentValue, 0)) * 100).toFixed(1);
+                                    const targetSlice = context.datasetIndex === 1
+                                        ? outerSlices[context.dataIndex]
+                                        : innerSlices[context.dataIndex];
+                                    if (!targetSlice) {
+                                        return [];
+                                    }
+                                    const percentage = totalPortfolio > 0 ? ((targetSlice.value / totalPortfolio) * 100).toFixed(1) : '0.0';
                                     return [
-                                        `${stock.symbol}: ${percentage}%`,
-                                        `Value: ${formatCurrency(stock.currentValue)}`,
-                                        `P&L: ${formatCurrency(stock.profitLoss)}`
+                                        `Allocation: ${percentage}%`,
+                                        `Value: ${formatCurrency(targetSlice.value)}`
                                     ];
                                 }
                             }
@@ -369,6 +1294,61 @@
                     }
                 }
             });
+
+            allocationChartInstance.$allocationInfo = {
+                innerSlices,
+                hoverItem: null
+            };
+
+            updateAllocationLegendList(legendSlices, innerColors, outerSlices, outerColorsBase, totalPortfolio);
+            updateAllocationNavigationUI();
+        }
+
+        function updateAllocationLegendList(slices, colors, etfBreakdownSlices = [], etfBreakdownColors = [], totalPortfolio = null) {
+            const container = document.getElementById('allocationLegendList');
+            if (!container) {
+                return;
+            }
+
+            const total = totalPortfolio ?? slices.reduce((sum, slice) => sum + slice.value, 0);
+
+            const rows = slices.map((slice, index) => {
+                const pct = total > 0 ? ((slice.value / total) * 100).toFixed(1) : '0.0';
+                const breakdownMarkup = (allocationViewState.mode === 'overview' && slice.label === 'ETFs' && etfBreakdownSlices.length > 0)
+                    ? `
+                        <div class="mt-2 ml-4 border-l border-slate-600/60 pl-3 space-y-1">
+                            <p class="text-[11px] uppercase tracking-wide text-slate-400">ETFs breakdown</p>
+                            ${etfBreakdownSlices.map((etfSlice, etfIndex) => {
+                                const etfPct = total > 0 ? ((etfSlice.value / total) * 100).toFixed(1) : '0.0';
+                                return `
+                                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                                        <span class="flex items-center gap-2 min-w-0">
+                                            <span class="w-2.5 h-2.5 rounded-full" style="background:${etfBreakdownColors[etfIndex] || window.ALLOCATION_PALETTE.etfBase}"></span>
+                                            <span class="text-[11px] text-slate-300 truncate">${etfSlice.label}</span>
+                                        </span>
+                                        <span class="text-[11px] text-slate-300">${etfPct}% • ${formatCurrency(etfSlice.value)}</span>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `
+                    : '';
+
+                return `
+                    <div class="w-full px-2 py-2 rounded bg-slate-900/25">
+                        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+                            <span class="flex items-center gap-2 min-w-0">
+                                <span class="w-2.5 h-2.5 rounded-full" style="background:${colors[index]}"></span>
+                                <span class="text-xs text-slate-200 truncate">${slice.label}</span>
+                            </span>
+                            <span class="text-[11px] text-cyan-200">${pct}% • ${formatCurrency(slice.value)}</span>
+                        </div>
+                        ${breakdownMarkup}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = rows.join('');
         }
 
         function renderPerformanceChart(historicalData) {
@@ -394,60 +1374,88 @@
                         {
                             label: 'Portfolio',
                             data: historicalData.map(d => d.portfolio),
-                            borderColor: '#3B82F6',
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            tension: 0.4,
-                            borderWidth: 2,
+                            borderColor: '#22D3EE',
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const { ctx, chartArea } = chart;
+                                if (!chartArea) {
+                                    return 'rgba(34, 211, 238, 0.15)';
+                                }
+                                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
+                                gradient.addColorStop(0, 'rgba(34, 211, 238, 0.26)');
+                                gradient.addColorStop(1, 'rgba(34, 211, 238, 0.02)');
+                                return gradient;
+                            },
+                            fill: true,
+                            tension: 0.32,
+                            borderWidth: 2.8,
                             pointRadius: 0,
-                            pointHoverRadius: 4
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#0F172A',
+                            pointHoverBorderColor: '#67E8F9',
+                            pointHoverBorderWidth: 2
                         },
                         {
                             label: 'S&P 500',
                             data: historicalData.map(d => d.sp500),
-                            borderColor: '#EF4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-                            tension: 0.4,
-                            borderWidth: 2,
+                            borderColor: '#34D399',
+                            backgroundColor: 'rgba(52, 211, 153, 0.06)',
+                            tension: 0.32,
+                            borderWidth: 2.2,
                             pointRadius: 0,
-                            pointHoverRadius: 4
+                            pointHoverRadius: 6,
+                            pointHoverBackgroundColor: '#0F172A',
+                            pointHoverBorderColor: '#6EE7B7',
+                            pointHoverBorderWidth: 2
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     plugins: {
                         legend: { 
                             labels: { 
-                                color: '#9CA3AF',
+                                color: '#BAE6FD',
                                 font: { size: 12 }
                             } 
                         },
                         tooltip: {
-                            backgroundColor: '#1F2937',
-                            titleColor: '#fff',
-                            bodyColor: '#9CA3AF',
-                            borderColor: '#374151',
-                            borderWidth: 1
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
+                            titleColor: '#E2E8F0',
+                            bodyColor: '#BAE6FD',
+                            borderColor: 'rgba(34, 211, 238, 0.35)',
+                            borderWidth: 1,
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
+                                }
+                            }
                         }
                     },
                     scales: {
                         x: { 
                             ticks: { 
-                                color: '#9CA3AF',
+                                color: '#93C5FD',
                                 maxRotation: 45,
                                 minRotation: 45
                             }, 
-                            grid: { color: '#374151' } 
+                            grid: { color: 'rgba(56, 189, 248, 0.12)' } 
                         },
                         y: { 
                             ticks: { 
-                                color: '#9CA3AF',
+                                color: '#93C5FD',
                                 callback: function(value) {
                                     return formatCurrency(value);
                                 }
                             }, 
-                            grid: { color: '#374151' } 
+                            grid: { color: 'rgba(56, 189, 248, 0.12)' } 
                         }
                     }
                 }
@@ -455,42 +1463,65 @@
         }
 
         function renderHoldingsTable(stocks, sp500) {
-            const allHoldings = sp500 ? [...stocks, sp500] : stocks;
+            const allHoldings = (sp500 ? [...stocks, sp500] : [...stocks]).map((holding) => ({
+                ...holding,
+                simpleReturnPct: computeSimpleReturnPct(holding)
+            }));
+
+            if (holdingsSort.direction) {
+                const directionFactor = holdingsSort.direction === 'desc' ? -1 : 1;
+                allHoldings.sort((a, b) => {
+                    const left = a.simpleReturnPct;
+                    const right = b.simpleReturnPct;
+                    if (left === null && right === null) return 0;
+                    if (left === null) return 1;
+                    if (right === null) return -1;
+                    return (left - right) * directionFactor;
+                });
+            }
             
             const tableHTML = allHoldings.map(stock => {
                 const isSP500 = stock.symbol === '^GSPC';
-                const bgColor = isSP500 ? 'rgba(59, 130, 246, 0.1)' : 
-                               stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.05)' : 'rgba(239, 68, 68, 0.05)';
-                const dotColor = isSP500 ? 'bg-blue-400' : stock.profitLoss >= 0 ? 'bg-green-400' : 'bg-red-400';
+                const bgColor = isSP500 ? 'rgba(34, 211, 238, 0.10)' : 
+                               stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.08)' : 'rgba(56, 189, 248, 0.08)';
+                const indicatorColor = isSP500
+                    ? '#22D3EE'
+                    : (currentAllocationColorsBySymbol[stock.symbol] || (stock.profitLoss >= 0 ? '#34D399' : '#38BDF8'));
+                const simpleReturnClass = stock.simpleReturnPct === null
+                    ? 'text-slate-400'
+                    : (stock.simpleReturnPct >= 0 ? 'text-emerald-300' : 'text-sky-300');
                 
                 return `
                     <tr style="background-color: ${bgColor}">
                         <td class="px-4 py-2">
                             <div class="flex items-center">
-                                <div class="w-2 h-2 rounded-full mr-3 ${dotColor}"></div>
+                                <div class="w-2 h-2 rounded-full mr-3" style="background:${indicatorColor}"></div>
                                 <div>
                                     <div class="font-semibold text-white flex items-center text-sm">
                                         ${stock.symbol}
                                         ${isSP500 ? '<span class="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded">BENCHMARK</span>' : ''}
                                     </div>
-                                    <div class="text-xs text-gray-400">${stock.name}</div>
+                                    <div class="text-xs text-slate-300">${stock.name}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="px-4 py-2 text-right text-gray-300 text-sm">
+                        <td class="px-4 py-2 text-right text-slate-300 text-sm">
                             ${isSP500 ? stock.quantity.toFixed(4) : stock.quantity}
                         </td>
-                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.avgCost)}</td>
-                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.currentPrice)}</td>
-                        <td class="px-4 py-2 text-right text-gray-300 text-sm">${formatCurrency(stock.investment)}</td>
+                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.avgCost)}</td>
+                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.currentPrice)}</td>
+                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.investment)}</td>
                         <td class="px-4 py-2 text-right font-semibold text-white text-sm">${formatCurrency(stock.currentValue)}</td>
-                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
+                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.profitLoss >= 0 ? 'text-emerald-300' : 'text-sky-300'}">
                             ${formatCurrency(stock.profitLoss)}
                         </td>
-                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.xirr >= 0 ? 'text-purple-400' : 'text-orange-400'}">
+                        <td class="px-4 py-2 text-right font-semibold text-sm ${simpleReturnClass}">
+                            ${formatSimpleReturn(stock.simpleReturnPct)}
+                        </td>
+                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.xirr >= 0 ? 'text-cyan-300' : 'text-amber-300'}">
                             ${formatPercent(stock.xirr)}
                         </td>
-                        <td class="px-4 py-2 text-xs text-gray-400">${stock.timeHeld}</td>
+                        <td class="px-4 py-2 text-xs text-slate-300">${stock.timeHeld}</td>
                     </tr>
                 `;
             }).join('');
