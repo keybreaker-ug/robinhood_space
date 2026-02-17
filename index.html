@@ -79,11 +79,70 @@
         .animate-pulse {
             animation: pulse 2s infinite;
         }
+        /* Session timeout notification */
+        .session-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            transform: translateX(120%);
+            transition: transform 0.3s ease-out;
+        }
+        .session-notification.show {
+            transform: translateX(0);
+        }
+        @keyframes urgentPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
+            50% { box-shadow: 0 0 20px 10px rgba(251, 191, 36, 0.2); }
+        }
+        .session-notification.urgent {
+            animation: urgentPulse 1s infinite;
+        }
     </style>
 </head>
 <body>
+    <!-- Session Timeout Notification -->
+    <div id="sessionNotification" class="session-notification">
+        <div class="glass-strong rounded-xl p-4 border border-amber-500/50 max-w-sm">
+            <div class="flex items-start gap-3">
+                <div class="flex-shrink-0">
+                    <i class="fa-solid fa-clock text-amber-400 text-xl"></i>
+                </div>
+                <div class="flex-1">
+                    <h4 class="text-amber-300 font-semibold text-sm">Session Expiring Soon</h4>
+                    <p class="text-slate-300 text-xs mt-1">
+                        Your session will expire in <span id="sessionCountdown" class="font-bold text-amber-400">60</span> seconds.
+                    </p>
+                    <p class="text-slate-400 text-xs mt-1">You will be logged out automatically.</p>
+                </div>
+                <button onclick="dismissSessionWarning()" class="text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Session Timer Display (shown in dashboard header) -->
+    <div id="sessionTimerDisplay" class="hidden fixed top-4 right-4 z-50">
+        <div class="glass-panel rounded-lg px-3 py-2 flex items-center gap-2">
+            <i class="fa-solid fa-clock text-cyan-400 text-sm"></i>
+            <span class="text-slate-300 text-xs">Session: <span id="sessionTimerText" class="text-cyan-300 font-mono">10:00</span></span>
+        </div>
+    </div>
+
+    <!-- Loading View (shown while checking session) -->
+    <div id="loadingView" class="min-h-screen flex items-center justify-center p-4">
+        <div class="text-center">
+            <div class="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 border border-cyan-400/35 rounded-full mb-4 shadow-[0_0_28px_rgba(34,211,238,0.25)]">
+                <i class="fa-solid fa-crow text-cyan-300 text-2xl animate-pulse" aria-hidden="true"></i>
+            </div>
+            <h1 class="raven-title text-3xl mb-2">Ravenhood</h1>
+            <p class="text-slate-400 text-sm">Loading...</p>
+        </div>
+    </div>
+
     <!-- Login View -->
-    <div id="loginView" class="min-h-screen flex items-center justify-center p-4">
+    <div id="loginView" class="hidden min-h-screen flex items-center justify-center p-4">
         <div class="glass-strong rounded-2xl p-8 w-full max-w-md">
             <div class="text-center mb-8">
                 <div class="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 border border-cyan-400/35 rounded-full mb-4 shadow-[0_0_28px_rgba(34,211,238,0.25)]">
@@ -242,6 +301,21 @@
                         <tbody id="holdingsTableBody" class="divide-y divide-cyan-500/15"></tbody>
                     </table>
                 </div>
+                <!-- Pagination Controls -->
+                <div id="holdingsPagination" class="p-4 border-t border-cyan-500/20 flex items-center justify-between">
+                    <div class="text-sm text-slate-400">
+                        Showing <span id="paginationStart">1</span>-<span id="paginationEnd">10</span> of <span id="paginationTotal">0</span> holdings
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button id="paginationPrev" type="button" class="px-3 py-1.5 text-sm bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            <i class="fa-solid fa-chevron-left mr-1"></i>Prev
+                        </button>
+                        <div id="paginationPages" class="flex items-center gap-1"></div>
+                        <button id="paginationNext" type="button" class="px-3 py-1.5 text-sm bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                            Next<i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="mt-8 text-center">
@@ -270,8 +344,202 @@
         let currentAllocationSlices = [];
         let allocationViewState = { mode: 'overview', key: null };
         let holdingsSort = { key: 'simpleReturnPct', direction: null };
+        let holdingsCurrentPage = 1;
+        const HOLDINGS_PER_PAGE = 10;
         const MAX_ALLOCATION_SLICES = 10;
         const MAX_ETF_BREAKDOWN_SLICES = 8;
+
+        // Session management variables
+        const SESSION_WARNING_SECONDS = 60; // Show warning at 1 minute remaining
+        let sessionTimerInterval = null;
+        let sessionRemainingSeconds = 0;
+        let sessionWarningShown = false;
+        let sessionWarningDismissed = false;
+
+        // Session management functions
+        function startSessionTimer(remainingSeconds) {
+            sessionRemainingSeconds = remainingSeconds;
+            sessionWarningShown = false;
+            sessionWarningDismissed = false;
+            
+            // Show session timer display
+            document.getElementById('sessionTimerDisplay').classList.remove('hidden');
+            
+            // Clear any existing interval
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+            }
+            
+            // Update immediately
+            updateSessionTimerDisplay();
+            
+            // Start countdown
+            sessionTimerInterval = setInterval(() => {
+                sessionRemainingSeconds--;
+                updateSessionTimerDisplay();
+                
+                // Show warning at 1 minute remaining
+                if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS && !sessionWarningShown && !sessionWarningDismissed) {
+                    showSessionWarning();
+                }
+                
+                // Update countdown in warning notification
+                if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS) {
+                    document.getElementById('sessionCountdown').textContent = sessionRemainingSeconds;
+                }
+                
+                // Auto logout when time expires
+                if (sessionRemainingSeconds <= 0) {
+                    handleAutoLogout();
+                }
+            }, 1000);
+        }
+
+        function updateSessionTimerDisplay() {
+            const minutes = Math.floor(sessionRemainingSeconds / 60);
+            const seconds = sessionRemainingSeconds % 60;
+            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('sessionTimerText').textContent = display;
+            
+            // Change color when low on time
+            const timerText = document.getElementById('sessionTimerText');
+            if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS) {
+                timerText.classList.remove('text-cyan-300');
+                timerText.classList.add('text-amber-400');
+            } else {
+                timerText.classList.remove('text-amber-400');
+                timerText.classList.add('text-cyan-300');
+            }
+        }
+
+        function showSessionWarning() {
+            sessionWarningShown = true;
+            const notification = document.getElementById('sessionNotification');
+            notification.classList.add('show', 'urgent');
+            document.getElementById('sessionCountdown').textContent = sessionRemainingSeconds;
+        }
+
+        function hideSessionWarning() {
+            const notification = document.getElementById('sessionNotification');
+            notification.classList.remove('show', 'urgent');
+        }
+
+        function dismissSessionWarning() {
+            sessionWarningDismissed = true;
+            hideSessionWarning();
+        }
+
+        function stopSessionTimer() {
+            if (sessionTimerInterval) {
+                clearInterval(sessionTimerInterval);
+                sessionTimerInterval = null;
+            }
+            document.getElementById('sessionTimerDisplay').classList.add('hidden');
+            hideSessionWarning();
+        }
+
+        async function handleAutoLogout() {
+            stopSessionTimer();
+            
+            // Show logout notification
+            const notification = document.getElementById('sessionNotification');
+            notification.innerHTML = `
+                <div class="glass-strong rounded-xl p-4 border border-red-500/50 max-w-sm">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <i class="fa-solid fa-right-from-bracket text-red-400 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-red-300 font-semibold text-sm">Session Expired</h4>
+                            <p class="text-slate-300 text-xs mt-1">
+                                You have been logged out due to session timeout.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            notification.classList.remove('urgent');
+            notification.classList.add('show');
+            
+            // Call logout endpoint
+            try {
+                await fetch(`${API_URL}/logout`, { method: 'POST' });
+            } catch (e) {
+                // Ignore errors on auto-logout
+            }
+            
+            // Clear form fields
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('mfaCode').value = '';
+            
+            // Show login view
+            showView('login');
+            
+            // Hide notification after 5 seconds
+            setTimeout(() => {
+                notification.classList.remove('show');
+                // Reset notification HTML
+                notification.innerHTML = `
+                    <div class="glass-strong rounded-xl p-4 border border-amber-500/50 max-w-sm">
+                        <div class="flex items-start gap-3">
+                            <div class="flex-shrink-0">
+                                <i class="fa-solid fa-clock text-amber-400 text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-amber-300 font-semibold text-sm">Session Expiring Soon</h4>
+                                <p class="text-slate-300 text-xs mt-1">
+                                    Your session will expire in <span id="sessionCountdown" class="font-bold text-amber-400">60</span> seconds.
+                                </p>
+                                <p class="text-slate-400 text-xs mt-1">You will be logged out automatically.</p>
+                            </div>
+                            <button onclick="dismissSessionWarning()" class="text-slate-400 hover:text-white transition">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }, 5000);
+        }
+
+        async function checkExistingSession() {
+            try {
+                const response = await fetch(`${API_URL}/check-session`);
+                const data = await response.json();
+                
+                if (data.success && data.logged_in && data.session_info) {
+                    // Valid session exists, load dashboard
+                    showView('waiting');
+                    document.getElementById('waitingTitle').textContent = 'Restoring Session';
+                    document.getElementById('waitingMessage').textContent = 'Loading your portfolio from existing session...';
+                    
+                    // Start session timer
+                    startSessionTimer(data.session_info.remaining_seconds);
+                    
+                    // Fetch portfolio data
+                    const portfolioResponse = await fetch(`${API_URL}/portfolio`);
+                    const portfolioData = await portfolioResponse.json();
+                    
+                    if (portfolioData.success) {
+                        renderDashboard(portfolioData.data);
+                        showView('dashboard');
+                        return true;
+                    }
+                }
+                return false;
+            } catch (e) {
+                console.error('Error checking session:', e);
+                return false;
+            }
+        }
+
+        // Check for existing session on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            const hasSession = await checkExistingSession();
+            if (!hasSession) {
+                showView('login');
+            }
+        });
 
         if (typeof window.getColorForIndex !== 'function' || !window.PALETTES) {
             window.PALETTES = {
@@ -677,6 +945,7 @@
         Chart.register(hoverCrosshairPlugin, allocationCenterLabelPlugin);
 
         function showView(view) {
+            document.getElementById('loadingView').classList.add('hidden');
             document.getElementById('loginView').classList.add('hidden');
             document.getElementById('waitingView').classList.add('hidden');
             document.getElementById('dashboardView').classList.add('hidden');
@@ -731,6 +1000,11 @@
                 const data = await response.json();
 
                 if (data.success) {
+                    // Start session timer if session info provided
+                    if (data.session_info) {
+                        startSessionTimer(data.session_info.remaining_seconds);
+                    }
+                    
                     // Update to "Retrieving Data"
                     document.getElementById('waitingTitle').textContent = 'Retrieving Data';
                     document.getElementById('waitingMessage').textContent = 'Please wait while we fetch your portfolio information...';
@@ -743,10 +1017,12 @@
                             renderDashboard(portfolioData.data);
                             showView('dashboard');
                         } else {
+                            stopSessionTimer();
                             showError(portfolioData.message || 'Failed to fetch portfolio data');
                             showView('login');
                         }
                     } catch (err) {
+                        stopSessionTimer();
                         showError('Error fetching portfolio: ' + err.message);
                         showView('login');
                     }
@@ -761,6 +1037,7 @@
         }
 
         async function handleLogout() {
+            stopSessionTimer();
             await fetch(`${API_URL}/logout`, { method: 'POST' });
             document.getElementById('username').value = '';
             document.getElementById('password').value = '';
@@ -1479,11 +1756,20 @@
                     return (left - right) * directionFactor;
                 });
             }
+
+            // Pagination calculations
+            const totalItems = allHoldings.length;
+            const totalPages = Math.ceil(totalItems / HOLDINGS_PER_PAGE);
+            if (holdingsCurrentPage > totalPages) holdingsCurrentPage = Math.max(1, totalPages);
             
-            const tableHTML = allHoldings.map(stock => {
+            const startIndex = (holdingsCurrentPage - 1) * HOLDINGS_PER_PAGE;
+            const endIndex = Math.min(startIndex + HOLDINGS_PER_PAGE, totalItems);
+            const paginatedHoldings = allHoldings.slice(startIndex, endIndex);
+            
+            const tableHTML = paginatedHoldings.map(stock => {
                 const isSP500 = stock.symbol === '^GSPC';
                 const bgColor = isSP500 ? 'rgba(34, 211, 238, 0.10)' : 
-                               stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.08)' : 'rgba(56, 189, 248, 0.08)';
+                            stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.08)' : 'rgba(56, 189, 248, 0.08)';
                 const indicatorColor = isSP500
                     ? '#22D3EE'
                     : (currentAllocationColorsBySymbol[stock.symbol] || (stock.profitLoss >= 0 ? '#34D399' : '#38BDF8'));
@@ -1527,11 +1813,46 @@
             }).join('');
             
             document.getElementById('holdingsTableBody').innerHTML = tableHTML;
+            
+            // Update pagination UI
+            document.getElementById('paginationStart').textContent = totalItems === 0 ? 0 : startIndex + 1;
+            document.getElementById('paginationEnd').textContent = endIndex;
+            document.getElementById('paginationTotal').textContent = totalItems;
+            document.getElementById('paginationPrev').disabled = holdingsCurrentPage === 1;
+            document.getElementById('paginationNext').disabled = holdingsCurrentPage >= totalPages;
+            
+            // Render page buttons
+            const pagesContainer = document.getElementById('paginationPages');
+            let pagesHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === holdingsCurrentPage;
+                pagesHTML += `<button type="button" data-page="${i}" class="px-3 py-1.5 text-sm rounded transition ${isActive ? 'bg-cyan-500 text-slate-900 font-semibold' : 'bg-slate-900/80 border border-cyan-500/35 text-cyan-100 hover:bg-slate-800'}">${i}</button>`;
+            }
+            pagesContainer.innerHTML = pagesHTML;
         }
 
         // Allow enter key to submit login
         document.getElementById('password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') handleLogin();
+        });
+        // Pagination event listeners
+        document.getElementById('paginationPrev').addEventListener('click', () => {
+            if (holdingsCurrentPage > 1) {
+                holdingsCurrentPage--;
+                renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+            }
+        });
+
+        document.getElementById('paginationNext').addEventListener('click', () => {
+            holdingsCurrentPage++;
+            renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+        });
+
+        document.getElementById('paginationPages').addEventListener('click', (e) => {
+            if (e.target.dataset.page) {
+                holdingsCurrentPage = parseInt(e.target.dataset.page);
+                renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
+            }
         });
     </script>
 </body>

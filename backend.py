@@ -9,23 +9,174 @@ from pyxirr import xirr
 import pandas as pd
 import os
 import inspect
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from functools import lru_cache
+import threading
+import pickle
+from pathlib import Path
 
 app = Flask(__name__, static_folder='.')
 CORS(app)  # Enable CORS for local development
 
+# Session configuration
+SESSION_TIMEOUT_MINUTES = 45
+PICKLE_FILE_PATH = Path(os.path.expanduser("~")) / ".tokens" / "robinhood.pickle"
+
 # Global variable to store login state
 logged_in = False
 login_token = None
+session_start_time = None  # Track when session started
+
+# Caches
 asset_metadata_cache = {}
+instrument_cache = {}  # Cache for instrument URL -> symbol mapping
+instrument_cache_lock = threading.Lock()
+
+# Thread pool for concurrent API calls
+executor = ThreadPoolExecutor(max_workers=10)
+
+
+def check_existing_session():
+    """Check if a valid pickle session file exists and is not expired"""
+    global logged_in, session_start_time
+    
+    if not PICKLE_FILE_PATH.exists():
+        return False
+    
+    try:
+        # Check file modification time
+        file_mtime = datetime.fromtimestamp(PICKLE_FILE_PATH.stat().st_mtime)
+        age_minutes = (datetime.now() - file_mtime).total_seconds() / 60
+        
+        if age_minutes > SESSION_TIMEOUT_MINUTES:
+            # Session expired, delete the file
+            # delete_pickle_file()
+            return False
+        
+        # Try to use the existing session
+        # robin_stocks automatically uses the pickle file if it exists
+        try:
+            # Verify session is still valid by making a simple API call
+            profile = rh.profiles.load_account_profile()
+            if profile:
+                logged_in = True
+                session_start_time = file_mtime
+                return True
+        except Exception:
+            # delete_pickle_file()
+            return False
+            
+    except Exception:
+        return False
+    
+    return False
+
+
+def delete_pickle_file():
+    """Delete the pickle session file"""
+    global logged_in, session_start_time
+    try:
+        if PICKLE_FILE_PATH.exists():
+            PICKLE_FILE_PATH.unlink()
+        logged_in = False
+        session_start_time = None
+    except Exception as e:
+        print(f"Error deleting pickle file: {e}")
+
+
+def get_session_info():
+    """Get current session information including time remaining"""
+    global session_start_time
+    
+    if not logged_in or not session_start_time:
+        return None
+    
+    elapsed = (datetime.now() - session_start_time).total_seconds()
+    remaining_seconds = (SESSION_TIMEOUT_MINUTES * 60) - elapsed
+    
+    if remaining_seconds <= 0:
+        return None
+    
+    return {
+        'remaining_seconds': int(remaining_seconds),
+        'timeout_minutes': SESSION_TIMEOUT_MINUTES
+    }
+
+
+def update_session_start_time():
+    """Update the session start time to now (called on successful login)"""
+    global session_start_time
+    session_start_time = datetime.now()
+    # Touch the pickle file to update its modification time
+    if PICKLE_FILE_PATH.exists():
+        PICKLE_FILE_PATH.touch()
 
 @app.route('/')
 def serve_index():
     """Serve the index.html file"""
     return send_from_directory('.', 'index.html')
 
+
+@app.route('/api/check-session', methods=['GET'])
+def check_session():
+    """Check if there's a valid existing session"""
+    global logged_in
+    
+    # First check if we're already logged in
+    if logged_in:
+        session_info = get_session_info()
+        if session_info:
+            return jsonify({
+                'success': True,
+                'logged_in': True,
+                'session_info': session_info
+            })
+        else:
+            # Session expired
+            # delete_pickle_file()
+            logged_in = False
+    
+    # Check for existing pickle file session
+    if check_existing_session():
+        session_info = get_session_info()
+        return jsonify({
+            'success': True,
+            'logged_in': True,
+            'session_info': session_info
+        })
+    
+    return jsonify({
+        'success': True,
+        'logged_in': False,
+        'session_info': None
+    })
+
+
+@app.route('/api/session-info', methods=['GET'])
+def session_info_endpoint():
+    """Get current session timing information"""
+    if not logged_in:
+        return jsonify({
+            'success': False,
+            'message': 'Not logged in'
+        }), 401
+    
+    session_info = get_session_info()
+    if not session_info:
+        # delete_pickle_file()
+        return jsonify({
+            'success': False,
+            'message': 'Session expired'
+        }), 401
+    
+    return jsonify({
+        'success': True,
+        'session_info': session_info
+    })
+
 @app.route('/api/login', methods=['POST'])
 def login():
-    global logged_in, login_token
+    global logged_in, login_token, session_start_time
 
     data = request.get_json(silent=True) or {}
     username = (data.get('username') or '').strip()
@@ -62,10 +213,13 @@ def login():
         if isinstance(login_result, dict) and login_result.get('access_token'):
             logged_in = True
             login_token = login_result
+            update_session_start_time()  # Set session start time
+            session_info = get_session_info()
             return jsonify({
                 'success': True,
                 'message': 'Login successful',
-                'requires_2fa': False
+                'requires_2fa': False,
+                'session_info': session_info
             })
 
         if isinstance(login_result, dict):
@@ -147,23 +301,28 @@ def get_portfolio():
                 }
             })
         
-        # Fetch transactions
-        individual_orders = fetch_transactions()
+        # OPTIMIZATION: Fetch orders ONCE and process all data from it
+        orders = rh.orders.get_all_stock_orders()
+        orders = orders[::-1]  # Reverse to chronological order
+        
+        # OPTIMIZATION: Batch fetch all unique instrument URLs concurrently
+        unique_instruments = set(order['instrument'] for order in orders)
+        prefetch_instruments(unique_instruments)
+        
+        # Process transactions using cached instrument data
+        individual_orders, stock_ages, earliest_date = process_orders_optimized(orders)
         
         # Calculate XIRR and Investments
         overall_xirr, xirr_values, investments = calculate_xirr_investments(stocks_data, individual_orders)
         
-        # Get stock ages
-        stock_ages = get_stock_ages()
+        # OPTIMIZATION: Fetch S&P 500 data ONCE for both comparison and historical performance
+        sp500_hist = fetch_sp500_history(earliest_date)
         
-        # Get earliest purchase date across all stocks
-        earliest_date = get_earliest_purchase_date()
+        # Calculate S&P 500 comparison using pre-fetched data
+        sp500_data = calculate_sp500_comparison_optimized(earliest_date, sum(investments), sp500_hist)
         
-        # Calculate S&P 500 comparison
-        sp500_data = calculate_sp500_comparison(earliest_date, sum(investments))
-        
-        # Get historical performance data
-        historical_data = get_historical_performance(individual_orders, earliest_date)
+        # Get historical performance data using pre-fetched S&P 500 data
+        historical_data = get_historical_performance_optimized(individual_orders, earliest_date, sp500_hist)
 
         # Get monthly cash flow summary
         monthly_cash_flows = get_monthly_cash_flows(individual_orders)
@@ -171,10 +330,14 @@ def get_portfolio():
         # Flatten all transaction cash flows for frontend aggregation/chart controls
         cash_flow_transactions = get_cash_flow_transactions(individual_orders)
         
+        # OPTIMIZATION: Batch fetch asset metadata concurrently
+        symbols_to_fetch = [(stock['Symbol'], stock['Name']) for stock in stocks_data]
+        fetch_asset_metadata_batch(symbols_to_fetch)
+        
         # Combine all data
         portfolio_stocks = []
         for stock, xirr_value, investment in zip(stocks_data, xirr_values, investments):
-            metadata = get_asset_metadata(stock['Symbol'], stock['Name'])
+            metadata = asset_metadata_cache.get(stock['Symbol'], {'sector': 'Uncategorized', 'isEtf': False})
             portfolio_stocks.append({
                 'name': stock['Name'],
                 'symbol': stock['Symbol'],
@@ -215,39 +378,127 @@ def get_portfolio():
             'message': str(e)
         }), 500
 
-def fetch_transactions():
-    """Fetch all stock transactions from Robinhood"""
-    orders = rh.orders.get_all_stock_orders()
-    orders = orders[::-1]
+
+def get_instrument_symbol(instrument_url):
+    """Get symbol from instrument URL with caching"""
+    with instrument_cache_lock:
+        if instrument_url in instrument_cache:
+            return instrument_cache[instrument_url]
     
+    # If not cached, fetch it
+    instrument_data = rh.stocks.get_instrument_by_url(instrument_url)
+    symbol = instrument_data['symbol']
+    
+    with instrument_cache_lock:
+        instrument_cache[instrument_url] = symbol
+    
+    return symbol
+
+
+def prefetch_instruments(instrument_urls):
+    """Prefetch all instrument URLs concurrently and cache them"""
+    urls_to_fetch = []
+    
+    with instrument_cache_lock:
+        for url in instrument_urls:
+            if url not in instrument_cache:
+                urls_to_fetch.append(url)
+    
+    if not urls_to_fetch:
+        return
+    
+    def fetch_single_instrument(url):
+        try:
+            instrument_data = rh.stocks.get_instrument_by_url(url)
+            return url, instrument_data['symbol']
+        except Exception:
+            return url, None
+    
+    # Fetch concurrently
+    futures = {executor.submit(fetch_single_instrument, url): url for url in urls_to_fetch}
+    
+    for future in as_completed(futures):
+        url, symbol = future.result()
+        if symbol:
+            with instrument_cache_lock:
+                instrument_cache[url] = symbol
+
+
+def process_orders_optimized(orders):
+    """
+    Process all orders in a single pass to extract:
+    - individual_orders (transactions by symbol)
+    - stock_ages (time held for each stock)
+    - earliest_date (earliest purchase date)
+    
+    This replaces fetch_transactions(), get_stock_ages(), and get_earliest_purchase_date()
+    """
     individual_orders = {}
+    stock_dates = defaultdict(list)
+    all_dates = []
     
     for order in orders:
-        instrument = order['instrument']
-        instrument_data = rh.stocks.get_instrument_by_url(instrument)
-        symbol = instrument_data['symbol']
+        instrument_url = order['instrument']
+        symbol = get_instrument_symbol(instrument_url)
         
         if symbol not in individual_orders:
             individual_orders[symbol] = [[], []]
         
         if order['state'] == 'filled':
+            # Process executions for transactions
             for execution in order['executions']:
-                individual_orders[symbol][0].append(execution['timestamp'][:execution['timestamp'].find("T")])
-                individual_orders[symbol][1].append(float(execution['rounded_notional']) * (-1 if order['side'] == 'buy' else 1))
+                date_str = execution['timestamp'][:execution['timestamp'].find("T")]
+                amount = float(execution['rounded_notional']) * (-1 if order['side'] == 'buy' else 1)
+                individual_orders[symbol][0].append(date_str)
+                individual_orders[symbol][1].append(amount)
+            
+            # Process order date for stock ages
+            try:
+                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%SZ")
+            except:
+                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
+            
+            stock_dates[symbol].append(order_date)
+            all_dates.append(order_date)
     
-    return individual_orders
+    # Calculate stock ages
+    stock_ages = {}
+    today = datetime.today()
+    
+    for stock, dates in stock_dates.items():
+        earliest_date = min(dates)
+        diff = relativedelta(today, earliest_date)
+        stock_ages[stock] = f"{diff.years} years {diff.months} months {diff.days} days"
+    
+    # Get earliest purchase date
+    earliest_date = min(all_dates) if all_dates else datetime.today()
+    
+    return individual_orders, stock_ages, earliest_date
 
-def get_asset_metadata(symbol, fallback_name=''):
-    """Return cached sector/ETF metadata for a symbol."""
+
+def fetch_sp500_history(start_date):
+    """Fetch S&P 500 historical data once"""
+    sp500 = yf.Ticker("^GSPC")
+    today = datetime.today()
+    hist = sp500.history(start=start_date.strftime('%Y-%m-%d'), end=today.strftime('%Y-%m-%d'))
+    return hist
+
+
+def fetch_asset_metadata_single(symbol, fallback_name):
+    """Fetch metadata for a single symbol"""
     if symbol in asset_metadata_cache:
-        return asset_metadata_cache[symbol]
-
+        return symbol, asset_metadata_cache[symbol]
+    
     sector = 'Uncategorized'
     is_etf = False
 
     try:
         info = yf.Ticker(symbol).info or {}
-        sector = (info.get('sector') or info.get('category') or sector).strip() if isinstance(info.get('sector') or info.get('category') or sector, str) else sector
+        sector = (info.get('sector') or info.get('category') or sector)
+        if isinstance(sector, str):
+            sector = sector.strip()
+        else:
+            sector = 'Uncategorized'
         quote_type = (info.get('quoteType') or '').upper()
         if quote_type == 'ETF':
             is_etf = True
@@ -262,49 +513,34 @@ def get_asset_metadata(symbol, fallback_name=''):
         'sector': sector or 'Uncategorized',
         'isEtf': is_etf
     }
+    
+    return symbol, metadata
+
+
+def fetch_asset_metadata_batch(symbols_with_names):
+    """Fetch asset metadata for multiple symbols concurrently"""
+    symbols_to_fetch = [(s, n) for s, n in symbols_with_names if s not in asset_metadata_cache]
+    
+    if not symbols_to_fetch:
+        return
+    
+    futures = {executor.submit(fetch_asset_metadata_single, symbol, name): symbol 
+               for symbol, name in symbols_to_fetch}
+    
+    for future in as_completed(futures):
+        symbol, metadata = future.result()
+        asset_metadata_cache[symbol] = metadata
+
+
+def get_asset_metadata(symbol, fallback_name=''):
+    """Return cached sector/ETF metadata for a symbol."""
+    if symbol in asset_metadata_cache:
+        return asset_metadata_cache[symbol]
+
+    _, metadata = fetch_asset_metadata_single(symbol, fallback_name)
     asset_metadata_cache[symbol] = metadata
     return metadata
 
-def get_stock_ages():
-    """Fetch earliest order date and account age for each individual stock"""
-    orders = rh.orders.get_all_stock_orders()
-    stock_dates = defaultdict(list)
-    
-    for order in orders:
-        if order["state"] == "filled":
-            instrument = order['instrument']
-            instrument_data = rh.stocks.get_instrument_by_url(instrument)
-            symbol = instrument_data['symbol']
-            try:
-                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%SZ")
-            except:
-                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            stock_dates[symbol].append(order_date)
-    
-    stock_ages = {}
-    today = datetime.today()
-    
-    for stock, dates in stock_dates.items():
-        earliest_date = min(dates)
-        diff = relativedelta(today, earliest_date)
-        stock_ages[stock] = f"{diff.years} years {diff.months} months {diff.days} days"
-    
-    return stock_ages
-
-def get_earliest_purchase_date():
-    """Get the earliest purchase date across all stocks"""
-    orders = rh.orders.get_all_stock_orders()
-    all_dates = []
-    
-    for order in orders:
-        if order["state"] == "filled":
-            try:
-                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%SZ")
-            except:
-                order_date = datetime.strptime(order["last_transaction_at"], "%Y-%m-%dT%H:%M:%S.%fZ")
-            all_dates.append(order_date)
-    
-    return min(all_dates) if all_dates else datetime.today()
 
 def calculate_xirr_investments(stocks_data, individual_orders):
     """Calculate XIRR and total investments"""
@@ -351,19 +587,13 @@ def calculate_xirr_investments(stocks_data, individual_orders):
     
     return overall_xirr, xirr_values, investments
 
-def calculate_sp500_comparison(start_date, total_investment):
-    """Calculate S&P 500 performance with SIP strategy"""
-    if total_investment <= 0:
+
+def calculate_sp500_comparison_optimized(start_date, total_investment, hist):
+    """Calculate S&P 500 performance with SIP strategy using pre-fetched data"""
+    if total_investment <= 0 or hist.empty:
         return None
 
-    # Download S&P 500 data
-    sp500 = yf.Ticker("^GSPC")
-    
     today = datetime.today()
-    hist = sp500.history(start=start_date.strftime('%Y-%m-%d'), end=today.strftime('%Y-%m-%d'))
-    
-    if hist.empty:
-        return None
     
     # Calculate number of months from start to today
     diff = relativedelta(today, start_date)
@@ -435,13 +665,10 @@ def calculate_sp500_comparison(start_date, total_investment):
         'timeHeld': time_held
     }
 
-def get_historical_performance(individual_orders, start_date):
-    """Get historical performance data for portfolio vs S&P 500"""
+
+def get_historical_performance_optimized(individual_orders, start_date, sp500_hist):
+    """Get historical performance data for portfolio vs S&P 500 using pre-fetched data"""
     today = datetime.today()
-    
-    # Download S&P 500 historical data
-    sp500 = yf.Ticker("^GSPC")
-    sp500_hist = sp500.history(start=start_date.strftime('%Y-%m-%d'), end=today.strftime('%Y-%m-%d'))
     
     if sp500_hist.empty:
         return []
@@ -474,6 +701,10 @@ def get_historical_performance(individual_orders, start_date):
     sp500_investment = 0
     processed_transaction_dates = set()
     
+    # Pre-convert sp500_hist index to strings for faster lookup
+    sp500_index_strings = sp500_hist.index.strftime('%Y-%m-%d').tolist()
+    sp500_prices = sp500_hist['Close'].tolist()
+    
     # Sample weekly
     while current_date <= today:
         date_str = current_date.strftime('%Y-%m-%d')
@@ -485,33 +716,33 @@ def get_historical_performance(individual_orders, start_date):
                 processed_transaction_dates.add(trans_date)
                 
                 # For S&P 500, buy shares at the price on transaction date
-                closest_sp500_date = sp500_hist.index[sp500_hist.index >= trans_date]
-                if len(closest_sp500_date) > 0:
-                    sp500_price = sp500_hist.loc[closest_sp500_date[0]]['Close']
-                    sp500_shares += abs(amount) / sp500_price
-                    sp500_investment += abs(amount)
+                for i, idx_date in enumerate(sp500_index_strings):
+                    if idx_date >= trans_date:
+                        sp500_price = sp500_prices[i]
+                        sp500_shares += abs(amount) / sp500_price
+                        sp500_investment += abs(amount)
+                        break
         
         # Get S&P 500 value at this date
-        closest_date = sp500_hist.index[sp500_hist.index >= date_str]
-        if len(closest_date) > 0 and cumulative_investment > 0:
-            sp500_current_price = sp500_hist.loc[closest_date[0]]['Close']
-            sp500_value = sp500_shares * sp500_current_price
-            
-            # Normalize to percentage gain
-            portfolio_gain_pct = 0  # Placeholder - actual portfolio value would need real-time calculation
-            sp500_gain_pct = ((sp500_value - sp500_investment) / sp500_investment * 100) if sp500_investment > 0 else 0
-            
-            historical_data.append({
-                'date': current_date.strftime('%b %d, %Y'),
-                'portfolio': cumulative_investment,  # Simplified - would need actual portfolio value
-                'sp500': sp500_value,
-                'portfolioInvestment': cumulative_investment,
-                'sp500Investment': sp500_investment
-            })
+        for i, idx_date in enumerate(sp500_index_strings):
+            if idx_date >= date_str:
+                if cumulative_investment > 0:
+                    sp500_current_price = sp500_prices[i]
+                    sp500_value = sp500_shares * sp500_current_price
+                    
+                    historical_data.append({
+                        'date': current_date.strftime('%b %d, %Y'),
+                        'portfolio': cumulative_investment,
+                        'sp500': sp500_value,
+                        'portfolioInvestment': cumulative_investment,
+                        'sp500Investment': sp500_investment
+                    })
+                break
         
         current_date += timedelta(days=7)
     
     return historical_data
+
 
 def get_monthly_cash_flows(individual_orders):
     """Aggregate buy/sell/net cash flows by month across all stock transactions."""
@@ -549,6 +780,7 @@ def get_monthly_cash_flows(individual_orders):
 
     return results
 
+
 def get_cash_flow_transactions(individual_orders):
     """Flatten individual orders into date-sorted cash flow transactions.
 
@@ -575,24 +807,34 @@ def get_cash_flow_transactions(individual_orders):
     transactions.sort(key=lambda row: row['date'])
     return transactions
 
+
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    global logged_in, login_token
+    global logged_in, login_token, session_start_time
     
     try:
         rh.logout()
         logged_in = False
         login_token = None
+        session_start_time = None
+        # delete_pickle_file()  # Delete the pickle file on logout
         
         return jsonify({
             'success': True,
             'message': 'Logged out successfully'
         })
     except Exception as e:
+        # Even if logout fails, clear local state and delete pickle
+        logged_in = False
+        login_token = None
+        session_start_time = None
+        # delete_pickle_file()
+        
         return jsonify({
-            'success': False,
-            'message': str(e)
-        }), 500
+            'success': True,
+            'message': 'Logged out successfully'
+        })
+
 
 if __name__ == '__main__':
     print("=" * 60)
