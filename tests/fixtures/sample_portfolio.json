@@ -1,0 +1,141 @@
+{
+  "meta": {
+    "holder": "Robinhood Portfolio",
+    "broker": "Robinhood",
+    "generated": "2026-08-02",
+    "live": {
+      "asof": "02 Aug 2026 16:00 ET",
+      "source": "Robinhood + Yahoo fallback (1 holding)",
+      "market": "closed",
+      "n_live": 4,
+      "n_stale": 1
+    }
+  },
+  "totals": {
+    "total_value": 18480.0,
+    "equity_val": 11150.0,
+    "mf_val": 7330.0,
+    "n_holdings": 5,
+    "n_equity": 3,
+    "n_mf": 2,
+    "day_pnl": 171.0,
+    "day_pnl_pct": 0.93,
+    "port_pe": 34.2,
+    "top10_weight": 100.0,
+    "top20_weight": 100.0
+  },
+  "cg": {
+    "realized": {
+      "lt": [null, null, null, null],
+      "st": [null, null, null],
+      "spec": [null, null, 186.42]
+    },
+    "open": {
+      "LT": 1330.0,
+      "ST": 1660.0,
+      "GRAND": 2990.0
+    },
+    "top_lots": [
+      ["AAPL", "LT", 12.0, "15 Jan 2024", 660.0, "Estimated FIFO"],
+      ["NVDA", "ST", 18.0, "11 Dec 2025", 810.0, "Estimated FIFO"],
+      ["MSFT", "LT", 6.0, "09 May 2024", 420.0, "Estimated FIFO"]
+    ]
+  },
+  "indices": [
+    {"name": "SPY", "level": 560.0, "prev_close": 555.2, "chg_pct": 0.86, "source": "Robinhood"},
+    {"name": "QQQ", "level": 475.0, "prev_close": 469.4, "chg_pct": 1.19, "source": "Robinhood"}
+  ],
+  "sectors": [
+    {"sector": "Technology", "value": 11150.0, "count": 3, "weight": 60.34, "avg_pe": 34.2},
+    {"sector": "ETF", "value": 7330.0, "count": 2, "weight": 39.66, "avg_pe": null}
+  ],
+  "mcaps": [
+    {"bucket": "Mega cap", "value": 11150.0, "count": 3, "weight": 100.0, "avg_pe": 34.2}
+  ],
+  "holdings": [
+    {
+      "isin": "AAPL", "symbol": "AAPL", "name": "Apple", "asset": "Equity",
+      "qty": 20.0, "avg_cost": 180.0, "cmp": 225.0, "cur_value": 4500.0,
+      "cost_value": 3600.0, "gain": 900.0, "gain_pct": 25.0, "day_chg_pct": 1.35,
+      "pe": 31.4, "sector": "Technology", "industry": "Consumer Electronics",
+      "mcap": 3400000000000.0, "mcap_bucket": "Mega cap", "wk52_high": 237.49,
+      "wk52_low": 164.08, "off_high_pct": -5.26, "weight": 24.35, "live": true,
+      "source": "Robinhood", "htype": "Mixed", "mf_xirr": 0.0,
+      "mf_invested": 3600.0, "mf_days": 931,
+      "note": "Market data: Robinhood. Open lots are analytical FIFO estimates reconciled to Robinhood cost basis."
+    },
+    {
+      "isin": "MSFT", "symbol": "MSFT", "name": "Microsoft", "asset": "Equity",
+      "qty": 10.0, "avg_cost": 370.0, "cmp": 440.0, "cur_value": 4400.0,
+      "cost_value": 3700.0, "gain": 700.0, "gain_pct": 18.92, "day_chg_pct": 0.74,
+      "pe": 35.6, "sector": "Technology", "industry": "Software Infrastructure",
+      "mcap": 3270000000000.0, "mcap_bucket": "Mega cap", "wk52_high": 468.35,
+      "wk52_low": 344.77, "off_high_pct": -6.05, "weight": 23.81, "live": true,
+      "source": "Robinhood", "htype": "LT", "mf_xirr": 0.0,
+      "mf_invested": 3700.0, "mf_days": 815,
+      "note": "Market data: Robinhood. Open lots are analytical FIFO estimates reconciled to Robinhood cost basis."
+    },
+    {
+      "isin": "SPY", "symbol": "SPY", "name": "SPDR S&P 500 ETF Trust", "asset": "ETF",
+      "qty": 8.0, "avg_cost": 500.0, "cmp": 560.0, "cur_value": 4480.0,
+      "cost_value": 4000.0, "gain": 480.0, "gain_pct": 12.0, "day_chg_pct": 0.86,
+      "pe": null, "sector": "ETF", "industry": "Large Blend",
+      "mcap": null, "mcap_bucket": "Unclassified", "wk52_high": 565.0,
+      "wk52_low": 409.21, "off_high_pct": -0.88, "weight": 24.24, "live": true,
+      "source": "Robinhood", "htype": "LT", "mf_xirr": 15.2,
+      "mf_invested": 4000.0, "mf_days": 640,
+      "note": "Market data: Robinhood. Open lots are analytical FIFO estimates reconciled to Robinhood cost basis."
+    },
+    {
+      "isin": "QQQ", "symbol": "QQQ", "name": "Invesco QQQ Trust", "asset": "ETF",
+      "qty": 6.0, "avg_cost": 400.0, "cmp": 475.0, "cur_value": 2850.0,
+      "cost_value": 2400.0, "gain": 450.0, "gain_pct": 18.75, "day_chg_pct": 1.19,
+      "pe": null, "sector": "ETF", "industry": "Large Growth",
+      "mcap": null, "mcap_bucket": "Unclassified", "wk52_high": 503.52,
+      "wk52_low": 342.35, "off_high_pct": -5.66, "weight": 15.42, "live": false,
+      "source": "Robinhood + Yahoo fallback", "htype": "ST", "mf_xirr": 22.4,
+      "mf_invested": 2400.0, "mf_days": 251,
+      "note": "Market data: Robinhood + Yahoo fallback. Open lots are analytical FIFO estimates reconciled to Robinhood cost basis."
+    },
+    {
+      "isin": "NVDA", "symbol": "NVDA", "name": "NVIDIA", "asset": "Equity",
+      "qty": 18.0, "avg_cost": 80.0, "cmp": 125.0, "cur_value": 2250.0,
+      "cost_value": 1440.0, "gain": 810.0, "gain_pct": 56.25, "day_chg_pct": 2.13,
+      "pe": 42.8, "sector": "Technology", "industry": "Semiconductors",
+      "mcap": 3070000000000.0, "mcap_bucket": "Mega cap", "wk52_high": 152.89,
+      "wk52_low": 75.61, "off_high_pct": -18.24, "weight": 12.18, "live": true,
+      "source": "Robinhood", "htype": "ST", "mf_xirr": 0.0,
+      "mf_invested": 1440.0, "mf_days": 234,
+      "note": "Market data: Robinhood. Open lots are analytical FIFO estimates reconciled to Robinhood cost basis."
+    }
+  ],
+  "lots": {
+    "AAPL": [
+      {"term": "LT", "qty": 12.0, "date": "15 Jan 2024", "rate": 170.0, "days": 931, "gl": 660.0, "cmp": 225.0, "corp": "T"},
+      {"term": "ST", "qty": 8.0, "date": "18 Nov 2025", "rate": 195.0, "days": 257, "gl": 240.0, "cmp": 225.0, "corp": "T"}
+    ],
+    "MSFT": [
+      {"term": "LT", "qty": 6.0, "date": "09 May 2024", "rate": 370.0, "days": 815, "gl": 420.0, "cmp": 440.0, "corp": "T"},
+      {"term": "ST", "qty": 4.0, "date": "17 Feb 2026", "rate": 370.0, "days": 166, "gl": 280.0, "cmp": 440.0, "corp": "T"}
+    ],
+    "NVDA": [
+      {"term": "ST", "qty": 18.0, "date": "11 Dec 2025", "rate": 80.0, "days": 234, "gl": 810.0, "cmp": 125.0, "corp": "T"},
+      {"term": "", "qty": 0.0, "date": "10 Jun 2024", "rate": 0.0, "days": 784, "gl": 0.0, "cmp": 0.0, "corp": "SPLIT 10:1"}
+    ],
+    "SPY": [
+      {"term": "LT", "qty": 8.0, "date": "02 Nov 2024", "rate": 500.0, "days": 640, "gl": 480.0, "cmp": 560.0, "corp": "T"}
+    ],
+    "QQQ": [
+      {"term": "ST", "qty": 6.0, "date": "25 Nov 2025", "rate": 400.0, "days": 251, "gl": 450.0, "cmp": 475.0, "corp": "T"}
+    ]
+  },
+  "trades": [
+    {"exch": "US", "scrip": "Apple", "isin": "AAPL", "symbol": "AAPL", "date": "15 Jan 2024", "bs": "B", "qty": 12.0, "rate": 170.0, "value": 2040.0},
+    {"exch": "US", "scrip": "Microsoft", "isin": "MSFT", "symbol": "MSFT", "date": "09 May 2024", "bs": "B", "qty": 6.0, "rate": 370.0, "value": 2220.0},
+    {"exch": "US", "scrip": "SPDR S&P 500 ETF Trust", "isin": "SPY", "symbol": "SPY", "date": "02 Nov 2024", "bs": "B", "qty": 8.0, "rate": 500.0, "value": 4000.0},
+    {"exch": "US", "scrip": "Apple", "isin": "AAPL", "symbol": "AAPL", "date": "18 Nov 2025", "bs": "B", "qty": 8.0, "rate": 195.0, "value": 1560.0},
+    {"exch": "US", "scrip": "Invesco QQQ Trust", "isin": "QQQ", "symbol": "QQQ", "date": "25 Nov 2025", "bs": "B", "qty": 6.0, "rate": 400.0, "value": 2400.0},
+    {"exch": "US", "scrip": "NVIDIA", "isin": "NVDA", "symbol": "NVDA", "date": "11 Dec 2025", "bs": "B", "qty": 18.0, "rate": 80.0, "value": 1440.0},
+    {"exch": "US", "scrip": "Microsoft", "isin": "MSFT", "symbol": "MSFT", "date": "17 Feb 2026", "bs": "B", "qty": 4.0, "rate": 370.0, "value": 1480.0}
+  ]
+}

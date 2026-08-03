@@ -1,91 +1,76 @@
-# Ravenhood
+# Robinhood Portfolio Dashboard
 
-![Ravenhood Placeholder Banner](./assets/ui-example.png)
+A private, local-first U.S. stocks and ETFs dashboard. The Flask backend signs in to Robinhood, normalizes broker data into the dashboard contract, and serves a self-contained responsive interface with portfolio analytics, benchmarks, heatmaps, XIRR, holdings, activity, estimated open lots, and data-quality disclosures.
 
----
+The application binds only to `127.0.0.1`. Credentials, sessions, API payloads, and real portfolio data are neither included nor intended to be committed.
 
-Ravenhood is a better Robinhood analytics dashboard that is local-first. It pairs a Flask backend with a modern single-page frontend to show portfolio performance, holdings, benchmark comparisons, and cash-flow insights.
+## Dashboard
 
-## What It Does
+The interface includes:
 
-- Authenticates with Robinhood credentials (including optional 2FA code support).
-- Fetches stock holdings and transaction history.
-- Computes per-holding and portfolio-level metrics including P/L and XIRR.
-- Compares portfolio behavior with an S&P 500 strategy.
-- Visualizes allocation, performance trends, and monthly cash flows.
-- Shows holding-level metadata such as sector and ETF classification.
+- Overview, SPY/QQQ benchmarks, portfolio heatmap, and money-weighted returns
+- Allocation, valuation, sectors, market-cap buckets, and ETF analysis
+- Searchable/filterable/sortable holdings with a keyboard-accessible details drawer
+- Concentration risk, winners/losers, and 52-week positioning
+- Robinhood orders, dividends, splits, events, estimated open lots, and data quality
+- Responsive desktop/tablet/phone layouts, light/dark themes, tooltips, and sticky navigation
 
-## Tech Stack
+Robinhood is the primary source for holdings, quotes, fundamentals, instruments, orders, dividends, splits, events, and market state. Yahoo Finance is called only when a required public market field is absent, and every affected holding is tagged in the UI. Unsupported realized gains and authoritative tax lots remain visibly `Unavailable`; estimated FIFO lots are analytical context, not tax records.
 
-- Backend: Python, Flask, robin-stocks, yfinance, pyxirr, pandas
-- Frontend: HTML, Tailwind CSS (CDN), Chart.js, Font Awesome
-- Runtime model: Local server (`http://localhost:5005`) serving API + UI
+## Run locally
 
-## Project Structure
-
-- `backend.py`: Flask API server, Robinhood login flow, portfolio calculations, and analytics endpoints.
-- `index.html`: Single-page dashboard UI with login, charts, and holdings table.
-- `palettes.ts` / `palettes.js`: Color palette definitions for dashboard theme options.
-- `requirements.txt`: Python dependencies.
-
-## API Overview
-
-- `POST /api/login`
-  - Body: `username`, `password`, optional `mfa_code` / `mfaCode`
-  - Response indicates success or whether additional authentication is required.
-- `GET /api/portfolio`
-  - Returns consolidated portfolio data: stocks, S&P 500 comparison, historical performance, and cash flow data.
-- `POST /api/logout`
-  - Logs out and clears backend login state.
-
-## Getting Started
-
-### 1. Prerequisites
-
-- Python 3.10+
-- A Robinhood account
-
-### 2. Install dependencies
+Requires Python 3.10+ and a Robinhood account.
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 3. Run the app
-
-```bash
 python backend.py
 ```
 
-Then open [http://localhost:5005](http://localhost:5005).
+Open [http://127.0.0.1:5005](http://127.0.0.1:5005), then enter the account email, password, and an MFA code if Robinhood requests one.
 
-## How Login Works
+Session persistence is disabled by default. To opt in to `robin-stocks` session storage on a trusted private machine, set `ROBINHOOD_STORE_SESSION=true` before starting the server. Never expose this development server to a network or commit its local token files.
 
-1. Enter Robinhood username and password in the Ravenhood login screen.
-2. If Robinhood requests additional verification, enter your code in the optional `2FA Code` field.
-3. Ravenhood sends credentials only to your local Flask backend.
+## API
 
-## Notes and Caveats
+- `POST /api/login` — accepts `username`, `password`, and optional `mfa_code` or `mfaCode`
+- `GET /api/portfolio` — returns the normalized dashboard payload; `?refresh=1` bypasses the short in-memory cache
+- `POST /api/logout` — ends the Robinhood session and clears in-memory portfolio data
 
-- This project is intended for local/personal use.
-- Broker APIs and response formats can change over time.
-- Some computed historical data is approximation-based and depends on available transaction + market data.
+## Reusable Claude skill
 
-## Security Considerations
+The project-scoped skill is at `.claude/skills/building-robinhood-dashboard/`. In Claude Code, invoke `/building-robinhood-dashboard` and provide a target folder. The skill contains:
 
-- Run Ravenhood only on trusted machines.
-- Avoid exposing port `5005` to public networks.
-- Treat Robinhood credentials and session data as sensitive.
+- the canonical sanitized frontend and backend
+- a synthetic U.S. portfolio fixture
+- immutable UI and data contracts
+- a safe scaffold script
+- an exactness, security, and private-data validator
 
-## Roadmap Ideas
+Example:
 
-- Add persistent local config and encrypted credential/session handling.
-- Improve historical portfolio valuation accuracy by reconstructing point-in-time holdings.
-- Add export support (CSV/PDF) for reports.
-- Add tests for API response contracts and core analytics logic.
+```bash
+python .claude/skills/building-robinhood-dashboard/scripts/scaffold.py /tmp/robinhood-dashboard
+python .claude/skills/building-robinhood-dashboard/scripts/validate.py /tmp/robinhood-dashboard
+```
+
+The scaffold refuses to overwrite a non-empty target unless `--force` is explicitly supplied.
+
+## Validate
+
+```bash
+pip install -r requirements-dev.txt
+pytest -q
+python .claude/skills/building-robinhood-dashboard/scripts/validate.py .
+```
+
+The test suite covers authentication states, MFA, empty and fractional portfolios, ETF classification, Robinhood/Yahoo source mapping, unavailable fields, frontend structure, JavaScript parsing, sanitization, responsive contracts, and clean-room skill reproduction.
+
+## Security and limitations
+
+Robinhood does not publish a supported public retail brokerage API for this workflow; `robin-stocks` can break when private endpoints change. Use a trusted local machine, read-only portfolio access, and your own account. This software does not place orders and is not investment or tax advice.
 
 ## License
 
-This project is licensed under the Apache 2.0 License. See `LICENSE` for details.
+Apache-2.0. See `LICENSE`.

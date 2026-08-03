@@ -1,0 +1,4 @@
+interface:
+  display_name: "Build Robinhood Dashboard"
+  short_description: "Recreate the exact portfolio dashboard UI"
+  default_prompt: "Use $building-robinhood-dashboard to build the exact Robinhood portfolio dashboard from the canonical assets."

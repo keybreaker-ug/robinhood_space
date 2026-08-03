@@ -1,10 +1,4 @@
-robin-stocks
-gspread
-gspread-formatting
-oauth2client
-python-dateutil
-pyxirr
-flask
-flask-cors
-yfinance
-pandas
+Flask>=3.0,<4
+pyxirr>=0.10,<1
+robin-stocks>=3.2,<4
+yfinance>=0.2.65,<1
