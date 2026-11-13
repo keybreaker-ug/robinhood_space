@@ -1,10 +1,7 @@
-robin-stocks
-gspread
-gspread-formatting
-oauth2client
-python-dateutil
-pyxirr
-flask
-flask-cors
-yfinance
-pandas
+# Verified runtime: Python 3.11. Pin direct dependencies for reproducible installs.
+Flask==3.1.2
+robin-stocks==3.4.0
+yfinance==1.1.0
+pyxirr==0.10.3
+pandas==1.5.2
+numpy==1.23.5
