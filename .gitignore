@@ -65,6 +65,14 @@ db.sqlite3-journal
 instance/
 .webassets-cache
 
+# Local broker authentication caches must never be committed.
+.tokens/
+*.pickle
+
+# Local captures and generated output can contain portfolio data.
+/Screenshot *.png
+/output/
+
 # Scrapy stuff:
 .scrapy
 

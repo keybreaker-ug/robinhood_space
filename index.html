@@ -1,1859 +1,413 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ravenhood</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/js/all.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <style>
-        :root {
-            --bg-dark: #020617;
-            --bg-mid: #0b1220;
-            --glass-bg: rgba(15, 23, 42, 0.55);
-            --glass-strong: rgba(15, 23, 42, 0.78);
-            --glass-border: rgba(34, 211, 238, 0.22);
-            --neon-green: #22c55e;
-            --neon-blue: #22d3ee;
-            --text-soft: #93c5fd;
-        }
-        body {
-            background:
-                radial-gradient(circle at 20% 0%, rgba(34, 211, 238, 0.14), transparent 42%),
-                radial-gradient(circle at 85% 100%, rgba(34, 197, 94, 0.14), transparent 36%),
-                linear-gradient(160deg, var(--bg-dark), var(--bg-mid) 52%, var(--bg-dark));
-            color: #e2e8f0;
-        }
-        .glass-panel {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 12px 40px rgba(2, 6, 23, 0.45);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .glass-strong {
-            background: var(--glass-strong);
-            border: 1px solid rgba(34, 211, 238, 0.3);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 16px 40px rgba(2, 6, 23, 0.45);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-        }
-        .neon-text {
-            color: var(--neon-blue);
-            text-shadow: 0 0 16px rgba(34, 211, 238, 0.25);
-        }
-        .hacker-accent {
-            color: #86efac;
-            text-shadow: 0 0 14px rgba(34, 197, 94, 0.35);
-        }
-        .raven-title {
-            font-family: "JetBrains Mono", "SF Mono", "Fira Code", ui-monospace, Menlo, Monaco, monospace;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            text-transform: lowercase;
-            background: linear-gradient(90deg, #86efac 0%, #34d399 36%, #22d3ee 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 24px rgba(34, 211, 238, 0.24);
-        }
-        .raven-subline {
-            color: #67e8f9;
-            font-size: 0.75rem;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            opacity: 0.85;
-        }
-        @keyframes bounce {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-        .animate-bounce {
-            animation: bounce 1s infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-        .animate-pulse {
-            animation: pulse 2s infinite;
-        }
-        /* Session timeout notification */
-        .session-notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            transform: translateX(120%);
-            transition: transform 0.3s ease-out;
-        }
-        .session-notification.show {
-            transform: translateX(0);
-        }
-        @keyframes urgentPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.4); }
-            50% { box-shadow: 0 0 20px 10px rgba(251, 191, 36, 0.2); }
-        }
-        .session-notification.urgent {
-            animation: urgentPulse 1s infinite;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#d6d6d6">
+  <title>Ravenhood Portfolio</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/app.css">
+  <link rel="stylesheet" href="/static/research.css">
+  <link rel="stylesheet" href="/static/atlas.css">
+  <script src="/static/vendor/chart-4.4.0.umd.js" defer></script>
+  <script src="/static/research.js" defer></script>
+  <script src="/static/atlas.js" defer></script>
+  <script src="/static/app.js" defer></script>
 </head>
 <body>
-    <!-- Session Timeout Notification -->
-    <div id="sessionNotification" class="session-notification">
-        <div class="glass-strong rounded-xl p-4 border border-amber-500/50 max-w-sm">
-            <div class="flex items-start gap-3">
-                <div class="flex-shrink-0">
-                    <i class="fa-solid fa-clock text-amber-400 text-xl"></i>
-                </div>
-                <div class="flex-1">
-                    <h4 class="text-amber-300 font-semibold text-sm">Session Expiring Soon</h4>
-                    <p class="text-slate-300 text-xs mt-1">
-                        Your session will expire in <span id="sessionCountdown" class="font-bold text-amber-400">60</span> seconds.
-                    </p>
-                    <p class="text-slate-400 text-xs mt-1">You will be logged out automatically.</p>
-                </div>
-                <button onclick="dismissSessionWarning()" class="text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
+  <svg class="icon-library" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="icon-leaf" viewBox="0 0 32 32"><path d="M25 5C12 4 5 10 7 19c2 8 13 8 16 0 2-5 0-8 2-14Z" fill="currentColor"/><path d="M8 26 22 11M12 22l-1-7m6 2 5 1" fill="none" stroke="var(--leaf-line,#fff)" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="icon-refresh" viewBox="0 0 24 24"><path d="M20 5v5h-5M4 19v-5h5M5.5 8a7.5 7.5 0 0 1 12-2.1L20 10M4 14l2.5 4.1A7.5 7.5 0 0 0 18.5 16"/></symbol>
+    <symbol id="icon-moon" viewBox="0 0 24 24"><path d="M20.6 14.4A8.5 8.5 0 0 1 9.6 3.4a8.7 8.7 0 1 0 11 11Z"/></symbol>
+    <symbol id="icon-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4m0-14.2-1.4 1.4M6.3 17.7l-1.4 1.4"/></symbol>
+    <symbol id="icon-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+    <symbol id="icon-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+    <symbol id="icon-up" viewBox="0 0 24 24"><path d="m6 16 12-12M6 4h12v12"/></symbol>
+    <symbol id="icon-wallet" viewBox="0 0 24 24">
+      <path d="M20 9V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-3"/>
+      <path d="M3 8h15M16 9h5v6h-5a3 3 0 0 1 0-6Zm0 3h.01"/>
+    </symbol>
+    <symbol id="icon-coins" viewBox="0 0 24 24">
+      <ellipse cx="9" cy="6" rx="6" ry="2.5"/>
+      <path d="M3 6v8c0 1.4 2.7 2.5 6 2.5M3 10c0 1.4 2.7 2.5 6 2.5m6-6.5v4.5"/>
+      <ellipse cx="16" cy="13" rx="5" ry="2.5"/>
+      <path d="M11 13v4c0 1.4 2.2 2.5 5 2.5s5-1.1 5-2.5v-4"/>
+    </symbol>
+    <symbol id="icon-trend-up" viewBox="0 0 24 24"><path d="m3 17 6-6 4 4 8-8m-5 0h5v5"/></symbol>
+    <symbol id="icon-trend-down" viewBox="0 0 24 24"><path d="m3 7 6 6 4-4 8 8m-5 0h5v-5"/></symbol>
+    <symbol id="icon-trend-flat" viewBox="0 0 24 24"><path d="M4 12h16"/></symbol>
+    <symbol id="icon-percent" viewBox="0 0 24 24">
+      <path d="M5 19 19 5"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/>
+    </symbol>
+    <symbol id="icon-reinvest" viewBox="0 0 24 24">
+      <path d="M20 10a8 8 0 0 0-13-4L4 9m0-4v4h4M4 14a8 8 0 0 0 13 4l3-3m0 4v-4h-4"/>
+      <circle cx="12" cy="12" r="2.75"/>
+    </symbol>
+    <symbol id="icon-payout" viewBox="0 0 24 24">
+      <circle cx="8" cy="12" r="5.5"/><path d="M8 10v4m8-2h6m-3-3 3 3-3 3"/>
+    </symbol>
+    <symbol id="icon-cash" viewBox="0 0 24 24">
+      <rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>
+      <path d="M6 12h.01M18 12h.01"/>
+    </symbol>
+    <symbol id="icon-interest" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/>
+    </symbol>
+  </svg>
+
+  <main id="loading" class="loading-screen"><span class="loading-orbit"></span><p>A little perspective is on its way…</p></main>
+
+  <main id="login" class="auth-screen hidden">
+    <header>
+      <a class="brand" href="/" aria-label="Ravenhood home"><span class="brand-symbol"><svg><use href="#icon-leaf"/></svg></span>Ravenhood</a>
+      <h1 class="auth-tagline">Better insights into the investments</h1>
+    </header>
+    <form id="loginForm" class="auth-form" method="post" action="/api/login">
+      <label for="username">Username<input id="username" autocomplete="username" autocapitalize="none" spellcheck="false" required></label>
+      <label for="password">Password<input id="password" autocomplete="current-password" type="password" required></label>
+      <p id="loginError" class="form-error hidden" role="alert"></p>
+      <button class="btn auth-submit" id="signIn" type="submit">Sign in</button>
+    </form>
+  </main>
+
+  <main id="waiting" class="waiting-screen hidden"><section><span class="loading-orbit"></span><span class="eyebrow">One moment</span><h1 id="waitTitle">Waiting for sign-in approval</h1><p id="waitMessage" class="muted">Approve the request in Robinhood to continue.</p><button id="backToLogin" class="btn" data-action="backToLogin">Back to sign in</button></section></main>
+
+  <main id="app" class="app-shell hidden">
+    <aside class="atlas-sidebar" id="atlasSidebar">
+      <a class="brand" href="#overview" aria-label="Ravenhood overview"><span class="brand-symbol"><svg><use href="#icon-leaf"/></svg></span><span>Ravenhood<small>Portfolio Atlas</small></span></a>
+      <nav aria-label="Portfolio workspace">
+        <p>Workspace</p>
+        <a href="#overview" data-atlas-link="overview" aria-current="page">Overview</a>
+        <a href="#history" data-atlas-link="history">History</a>
+        <a href="#holdings" data-atlas-link="holdings">Holdings</a>
+        <a href="#index" data-atlas-link="index">Holdings index</a>
+        <a href="#heatmaps" data-atlas-link="heatmaps">Heatmaps</a>
+        <a href="#allocation" data-atlas-link="allocation">Allocation</a>
+        <a href="#valuation" data-atlas-link="valuation">Valuation</a>
+        <a href="#performance" data-atlas-link="performance">Performance</a>
+        <p>Records &amp; research</p>
+        <a href="#activity" data-atlas-link="activity">Activity</a>
+        <a href="#watchlist" data-atlas-link="watchlist">Watchlist</a>
+        <a href="#sources" data-atlas-link="sources">Data &amp; methods</a>
+      </nav>
+      <div class="atlas-local"><span class="live-dot"></span> Local workspace <small>Robinhood · USD</small></div>
+    </aside>
+    <div class="atlas-workspace">
+    <header class="app-header">
+      <div class="atlas-breadcrumb"><button type="button" class="icon-button atlas-menu" id="atlasMenu" aria-expanded="false" aria-controls="atlasSidebar" aria-label="Toggle navigation">☰</button><span>Workspace</span><b id="atlasBreadcrumb">Overview</b></div>
+      <div class="header-actions">
+        <span class="freshness">Updated <span id="updated">—</span></span>
+        <button type="button" id="atlasSearch" class="btn subtle atlas-search">Search holdings <kbd>Ctrl K</kbd></button>
+        <button id="refresh" class="icon-button" data-action="load" aria-label="Refresh portfolio"><svg class="stroke-icon" aria-hidden="true" focusable="false"><use href="#icon-refresh"/></svg></button>
+        <button class="icon-button" data-action="theme" aria-label="Toggle color theme">
+          <svg class="stroke-icon theme-moon" aria-hidden="true" focusable="false"><use href="#icon-moon"/></svg>
+          <svg class="stroke-icon theme-sun" aria-hidden="true" focusable="false"><use href="#icon-sun"/></svg>
+        </button>
+        <button class="icon-button" data-action="menu" aria-label="Settings" aria-expanded="false"><svg class="stroke-icon" aria-hidden="true" focusable="false"><use href="#icon-more"/></svg></button>
+        <div id="menu" class="menu hidden"><button data-action="signout">Sign out</button><button class="neg" data-action="clearSession">Sign out &amp; clear saved session</button></div>
+      </div>
+    </header>
+    <div id="warnings" class="warning-banner hidden" role="status"></div>
+    <p id="status" class="message hidden" role="status"></p>
+
+    <section id="dash">
+      <header class="atlas-page-heading"><h1 id="atlasTitle" tabindex="-1">Portfolio overview</h1><p id="atlasSubtitle" class="muted">Your Robinhood portfolio at a glance</p></header>
+      <section id="overview" class="overview-section" data-atlas-view="overview">
+        <div id="summary" class="portfolio-summary" aria-live="polite"></div>
+      </section>
+
+      <section class="heatmap-panel hidden" data-atlas-view="heatmaps" aria-labelledby="heatmapHeading">
+        <div class="section-heading">
+          <h2 id="heatmapHeading">Portfolio heatmap</h2>
+          <div class="heatmap-controls">
+            <label class="sr-only" for="filter">Asset type</label>
+            <select id="filter" data-change="heatmap"><option value="stock">Stocks</option><option value="etf">ETFs</option><option value="crypto">Crypto</option></select>
+            <label class="sr-only" for="metric">Heatmap metric</label>
+            <select id="metric" data-change="heatmap"><option value="week">1-week move</option><option value="month">1-month move</option><option value="xirr">XIRR</option><option value="value">Current value</option><option value="weight">Portfolio weight</option><option value="totalReturn">Total return</option></select>
+          </div>
         </div>
-    </div>
-
-    <!-- Session Timer Display (shown in dashboard header) -->
-    <div id="sessionTimerDisplay" class="hidden fixed top-4 right-4 z-50">
-        <div class="glass-panel rounded-lg px-3 py-2 flex items-center gap-2">
-            <i class="fa-solid fa-clock text-cyan-400 text-sm"></i>
-            <span class="text-slate-300 text-xs">Session: <span id="sessionTimerText" class="text-cyan-300 font-mono">10:00</span></span>
+        <div id="heat" class="heatmap-plot hidden" role="group" aria-label="Holdings sized by current value"></div>
+        <div id="heatmapFooter" class="heatmap-footer hidden">
+          <span id="heatmapSizingNote">Tile sizes use current value</span>
+          <div id="heatmapScale" class="heatmap-scale" data-mode="return">
+            <span id="heatmapScaleStart">Loss</span><i aria-hidden="true"></i><span id="heatmapScaleEnd">Gain</span>
+          </div>
         </div>
-    </div>
+        <p id="heatmapEmpty" class="small-note hidden" role="status"></p>
+        <div id="heatmapUnweighted" class="heatmap-unweighted hidden"><span class="small-note">Size unavailable</span><div id="heatmapUnweightedList"></div></div>
+      </section>
 
-    <!-- Loading View (shown while checking session) -->
-    <div id="loadingView" class="min-h-screen flex items-center justify-center p-4">
-        <div class="text-center">
-            <div class="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 border border-cyan-400/35 rounded-full mb-4 shadow-[0_0_28px_rgba(34,211,238,0.25)]">
-                <i class="fa-solid fa-crow text-cyan-300 text-2xl animate-pulse" aria-hidden="true"></i>
+      <div class="performance-layout" data-atlas-view="overview">
+        <section class="performance-panel" aria-labelledby="performanceHeading">
+          <div class="section-heading">
+            <div>
+              <h2 id="performanceHeading">Performance vs VOO (S&amp;P 500)</h2>
+              <p class="performance-description" id="performanceDescription">The comparison matches each purchase, including dividend reinvestments, at VOO’s closing price that day or on the next trading day. Sales and cash payouts are matched as withdrawals.</p>
             </div>
-            <h1 class="raven-title text-3xl mb-2">Ravenhood</h1>
-            <p class="text-slate-400 text-sm">Loading...</p>
+            <div class="range-control" role="group" aria-label="Performance period"><button data-range="1M" aria-pressed="false">1M</button><button data-range="3M" aria-pressed="false">3M</button><button data-range="1Y" aria-pressed="true" class="selected">1Y</button><button data-range="ALL" aria-pressed="false">All</button></div>
+          </div>
+          <dl class="performance-metrics" aria-label="Latest performance comparison">
+            <div><dt>Portfolio value</dt><dd id="performancePortfolioValue" class="performance-portfolio-value">—</dd></div>
+            <div><dt>VOO value</dt><dd id="performanceVooValue" class="performance-voo-value">—</dd></div>
+            <div><dt title="Annualized return since the first investment">VOO XIRR</dt><dd id="performanceVooXirr" class="performance-voo-value">—</dd></div>
+            <div><dt title="Percentage difference in value relative to VOO">Portfolio vs VOO</dt><dd id="performanceValueGap" class="muted">—</dd></div>
+          </dl>
+          <div class="chart-caption">
+            <div class="chart-legend"><span class="legend-label"><i class="legend-dot portfolio-dot" aria-hidden="true"></i>Portfolio value</span><span class="legend-label"><i class="legend-dot voo-dot" aria-hidden="true"></i>VOO</span></div>
+            <span id="chartPeriod" class="muted"></span>
+          </div>
+          <div class="performance-canvas"><canvas id="perf" role="img" aria-label="Portfolio and VOO values over the selected period" aria-describedby="performanceDescription"></canvas></div>
+        </section>
+      </div>
+
+      <div class="atlas-grid" data-atlas-view="overview">
+        <section class="atlas-card" aria-labelledby="atlasMarketHeading">
+          <div class="section-heading"><div><h2 id="atlasMarketHeading">Market pulse</h2><p class="small-note">Yahoo Finance · adjusted closes</p></div><select id="atlasMarketSymbol" aria-label="Market benchmark"><option value="VOO">S&amp;P 500 · VOO</option><option value="QQQ">Nasdaq-100 · QQQ</option><option value="DIA">Dow Jones · DIA</option><option value="BTC-USD">Bitcoin · BTC</option></select></div>
+          <p class="atlas-readout" id="atlasMarketValue" role="status"></p>
+          <div class="atlas-market-chart"><canvas id="atlasMarketChart" role="img" aria-label="Benchmark price over the past year"></canvas></div>
+        </section>
+        <section class="atlas-card" aria-labelledby="atlasMixHeading">
+          <div class="section-heading"><h2 id="atlasMixHeading">Asset allocation</h2><a class="atlas-link" href="#allocation">Explore →</a></div>
+          <div id="atlasMix"></div>
+        </section>
+        <section class="atlas-card" aria-labelledby="atlasMoversHeading">
+          <div class="section-heading"><div><h2 id="atlasMoversHeading">Weekly movers</h2><p class="small-note">Ranked by price change</p></div><select id="atlasMoverDirection" aria-label="Weekly movers direction"><option value="up">Leaders</option><option value="down">Laggards</option></select></div>
+          <div id="atlasMovers"></div>
+        </section>
+        <section class="atlas-card" aria-labelledby="atlasSectorHeading">
+          <div class="section-heading"><h2 id="atlasSectorHeading">Sector exposure</h2><a class="atlas-link" href="#allocation">All sectors →</a></div>
+          <p class="small-note">Direct stocks as a share of invested value</p>
+          <div id="atlasSectors"></div>
+        </section>
+      </div>
+
+      <section class="atlas-grid hidden" data-atlas-view="history">
+        <article class="atlas-card">
+          <div class="section-heading"><div><h2>Portfolio value history</h2><p id="atlasHistoryNote" class="small-note"></p></div><select id="atlasHistoryRange" aria-label="History range"><option>1M</option><option>3M</option><option selected>1Y</option><option value="ALL">All time</option></select></div>
+          <p id="atlasHistoryStatus" class="small-note" role="status"></p>
+          <div class="atlas-history-chart"><canvas id="atlasHistoryChart" role="img" aria-label="Reconstructed portfolio value. Select a point to inspect its date."></canvas></div>
+        </article>
+        <article class="atlas-card">
+          <h2>Day in detail</h2>
+          <label class="atlas-date">Inspect date <input id="atlasDay" type="date"></label>
+          <div id="atlasDayDetail" aria-live="polite"></div>
+          <label class="atlas-date">Jump to activity <select id="atlasEventDate"></select></label>
+        </article>
+        <article class="atlas-card atlas-full"><h2>Daily closing ledger</h2><div id="atlasClosingLedger"></div></article>
+      </section>
+
+      <section class="atlas-card hidden" data-atlas-view="index">
+        <label class="sr-only" for="atlasIndexSearch">Search securities index</label><input class="holdings-search" type="search" id="atlasIndexSearch" placeholder="Search ticker or name">
+        <div id="atlasIndex"></div>
+      </section>
+
+      <div class="atlas-grid hidden" data-atlas-view="allocation">
+        <section class="atlas-card"><h2>Direct sector exposure</h2><div id="atlasAllSectors"></div></section>
+        <section class="atlas-card"><h2>Cumulative concentration</h2><p class="small-note">Largest positions as a share of invested value</p><div id="atlasConcentration"></div></section>
+        <section class="atlas-card atlas-full"><h2>Stock market capitalization</h2><p class="small-note">Yahoo Finance · share of direct stock value</p><div id="atlasCaps"></div></section>
+      </div>
+
+      <section class="atlas-card hidden" data-atlas-view="valuation">
+        <div class="section-heading"><div><h2>Trailing P/E</h2><p class="small-note">Direct stocks · Yahoo Finance</p></div><select id="atlasValuationBand" aria-label="P/E band"><option value="all">All stocks</option><option value="under">Below 15×</option><option value="middle">15× to under 30×</option><option value="high">30× to under 50×</option><option value="highest">50× and above</option><option value="missing">No positive P/E</option></select></div>
+        <div id="atlasValuation"></div>
+      </section>
+
+      <section class="insights-section hidden" data-atlas-view="performance" aria-labelledby="insightsHeading">
+        <div class="section-heading"><h2 id="insightsHeading">Portfolio insights</h2></div>
+        <p class="small-note" id="insightRiskMethod"></p>
+        <div id="insights" class="portfolio-summary"></div>
+        <p class="small-note insight-sources">Research and methods ·
+          <a href="https://rpc.cfainstitute.org/topics/performance-attribution/risk-adjusted-performance" target="_blank" rel="noopener noreferrer">CFA Institute</a> ·
+          <a href="https://www.msci.com/downloads/web/msci-com/research-and-insights/blog-post/are-growth-and-value-indexes-still-in-style/MSCI-FaCS-Methodology.pdf" target="_blank" rel="noopener noreferrer">MSCI effective holdings</a> ·
+          <a href="https://stanford.edu/~wfsharpe/art/sr/sr.htm" target="_blank" rel="noopener noreferrer">William Sharpe</a>
+        </p>
+      </section>
+
+      <section id="portfolioTools" class="tools-panel hidden" data-atlas-view="allocation performance watchlist" aria-labelledby="toolsHeading">
+        <div class="tools-header"><h2 id="toolsHeading">Portfolio tools</h2><span id="researchAlertCount" class="small-note" aria-live="polite"></span></div>
+        <div class="tools-nav" role="group" aria-label="Portfolio tool">
+          <button type="button" data-research-tab="check" aria-pressed="true">Portfolio Check</button>
+          <button type="button" data-research-tab="preview" aria-pressed="false">Trade Preview</button>
+          <button type="button" data-research-tab="overlap" aria-pressed="false">ETF overlap</button>
+          <button type="button" data-research-tab="watch" aria-pressed="false">Watchlist</button>
+          <button type="button" data-research-tab="drivers" aria-pressed="false">Return drivers</button>
         </div>
-    </div>
+        <div id="researchStatus" class="small-note" role="status"></div>
+        <section id="research-check" class="tools-view" aria-label="Portfolio Check">
+          <details class="tools-settings">
+            <summary>Allocation targets and limits</summary>
+            <form id="researchPolicy" class="tools-form">
+              <fieldset><legend>Target allocation · total 100%</legend>
+                <label>Stocks %<input name="stock" type="number" min="0" max="100" step="0.01"></label>
+                <label>ETFs %<input name="etf" type="number" min="0" max="100" step="0.01"></label>
+                <label>Crypto %<input name="crypto" type="number" min="0" max="100" step="0.01"></label>
+                <label>Cash %<input name="cash" type="number" min="0" max="100" step="0.01"></label>
+              </fieldset>
+              <fieldset><legend>Review thresholds</legend>
+                <label>Drift (pp)<input name="band" type="number" min="0" max="100" step="0.01"></label>
+                <label>Position cap %<input name="position" type="number" min="0" max="100" step="0.01"></label>
+                <label>Company cap %<input name="company" type="number" min="0" max="100" step="0.01"></label>
+                <label>Sector cap %<input name="sector" type="number" min="0" max="100" step="0.01"></label>
+              </fieldset>
+              <button class="btn subtle" type="submit">Save targets</button><span id="researchPolicyStatus" class="small-note" role="status"></span>
+            </form>
+          </details>
+          <div id="researchAllocation" class="tools-grid"></div>
+          <div class="tools-row"><h3>Positions to review</h3><button type="button" class="btn subtle" id="researchCheckLoad">Refresh signals</button></div>
+          <div id="researchChecks"></div>
+        </section>
+        <section id="research-preview" class="tools-view hidden" aria-label="Trade Preview">
+          <form id="researchTrade" class="tools-form tools-inline">
+            <label>Holding or watchlist ticker<select id="researchTradeAsset"></select></label>
+            <label>Action<select id="researchTradeSide"><option value="buy">Buy</option><option value="sell">Sell</option></select></label>
+            <label>Amount ($)<input id="researchTradeAmount" type="number" min="0.01" step="0.01" required placeholder="0.00"></label>
+            <button class="btn subtle" type="submit">Preview</button>
+          </form>
+          <div id="researchPreviewResult" aria-live="polite"></div>
+          <details class="tools-settings">
+            <summary>Stress test</summary>
+            <form id="researchStress" class="tools-form tools-inline">
+              <label>Stock move %<input name="stock" type="number" min="-100" max="1000" step="0.1" value="-20" required></label>
+              <label>ETF move %<input name="etf" type="number" min="-100" max="1000" step="0.1" value="-15" required></label>
+              <label>Crypto move %<input name="crypto" type="number" min="-100" max="1000" step="0.1" value="-40" required></label>
+              <button class="btn subtle" type="submit">Run scenario</button>
+            </form>
+            <div id="researchStressResult" aria-live="polite"></div>
+          </details>
+        </section>
+        <section id="research-overlap" class="tools-view hidden" aria-label="ETF overlap">
+          <div class="tools-row"><h3>Company and sector exposure</h3><button type="button" class="btn subtle" id="researchFundLoad">Refresh ETF data</button></div>
+          <div id="researchOverlap"></div>
+        </section>
+        <section id="research-watch" class="tools-view hidden" aria-label="Watchlist and signals">
+          <form id="researchWatchAdd" class="tools-form tools-inline">
+            <label>Ticker<input name="symbol" required maxlength="20" placeholder="Ticker"></label>
+            <label>Asset type<select name="assetType"><option value="stock">Stock</option><option value="etf">ETF</option><option value="crypto">Crypto</option></select></label>
+            <button class="btn subtle" type="submit">Add to watchlist</button>
+            <button class="btn subtle" type="button" id="researchMarketLoad">Refresh signals</button>
+          </form>
+          <div class="tools-row"><label>Show <select id="researchWatchView"><option value="owned">Owned</option><option value="watch">Watchlist</option></select></label><span id="researchWatchStatus" class="small-note" role="status"></span></div>
+          <details class="tools-settings">
+            <summary>Saved screens</summary>
+            <form id="researchFilters" class="tools-form">
+              <div class="tools-inline">
+                <label>Max forward P/E<input name="pe" type="number" min="0" step="0.1"></label>
+                <label class="tools-check"><input name="peer" type="checkbox"> P/E at or below peers</label>
+                <label>Min earnings growth %<input name="growth" type="number" step="0.1"></label>
+                <label>Min net EPS revisions<input name="revisions" type="number" step="1"></label>
+                <label>Earnings in next days<input name="earnings" type="number" min="0" step="1"></label>
+                <label class="tools-check"><input name="trend" type="checkbox"> Above 200-day average</label>
+              </div>
+              <div class="tools-inline">
+                <label>Screen name<input name="screenName" maxlength="40" placeholder="My screen"></label>
+                <button class="btn subtle" type="submit">Save screen</button>
+                <label>Saved screen<select id="researchSavedScreen"></select></label>
+                <button class="btn subtle" type="button" id="researchDeleteScreen">Delete screen</button>
+              </div>
+            </form>
+          </details>
+          <div id="researchWatchRows"></div>
+          <details class="tools-settings">
+            <summary>Price alerts</summary>
+            <form id="researchAlert" class="tools-form tools-inline">
+              <label>Ticker<select id="researchAlertAsset"></select></label>
+              <label>Condition<select name="direction"><option value="above">At or above</option><option value="below">At or below</option></select></label>
+              <label>Price ($)<input name="price" type="number" min="0.00000001" step="any" required></label>
+              <button class="btn subtle" type="submit">Save alert</button>
+            </form>
+            <div id="researchAlerts"></div>
+          </details>
+        </section>
+        <section id="research-drivers" class="tools-view hidden" aria-label="Return drivers">
+          <div class="tools-inline">
+            <label>From <select id="researchDriversFrom"></select></label>
+            <label>To <select id="researchDriversTo"></select></label>
+          </div>
+          <div id="researchDrivers" aria-live="polite"></div>
+        </section>
+      </section>
 
-    <!-- Login View -->
-    <div id="loginView" class="hidden min-h-screen flex items-center justify-center p-4">
-        <div class="glass-strong rounded-2xl p-8 w-full max-w-md">
-            <div class="text-center mb-8">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-cyan-500/10 border border-cyan-400/35 rounded-full mb-4 shadow-[0_0_28px_rgba(34,211,238,0.25)]">
-                    <i class="fa-solid fa-crow text-cyan-300 text-2xl" aria-hidden="true"></i>
-                </div>
-                <h1 class="raven-title text-4xl mb-1">Ravenhood</h1>
-                <p class="text-slate-300">A better Robinhood dashboard with advanced analytics</p>
-            </div>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-cyan-100 mb-2">Username</label>
-                    <input type="text" id="username" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter your username">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-cyan-100 mb-2">Password</label>
-                    <input type="password" id="password" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter your password">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-medium text-cyan-100 mb-2">2FA Code (Optional)</label>
-                    <input type="text" id="mfaCode" class="w-full px-4 py-3 bg-slate-900/70 border border-cyan-500/30 text-white rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-transparent outline-none transition" placeholder="Enter Robinhood verification code if prompted">
-                </div>
-
-                <div id="errorMsg" class="hidden bg-red-900/50 border border-red-700 text-red-300 px-4 py-3 rounded-lg text-sm"></div>
-
-                <button onclick="handleLogin()" class="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-slate-950 font-semibold py-3 px-4 rounded-lg transition duration-200">
-                    Login to Ravenhood
-                </button>
-            </div>
-
-            <div class="mt-6 p-4 bg-cyan-950/30 border border-cyan-500/35 rounded-lg">
-                <p class="text-xs text-cyan-200">
-                    <strong>Security Note:</strong> Your credentials are sent to the local backend server running on your machine. 
-                    Make sure the Flask server is running on port 5005.
-                </p>
-            </div>
+      <section id="positions" class="holdings-section hidden" data-atlas-view="holdings">
+        <div class="section-heading"><div><h2 id="holdingsHeading">Holdings</h2><p id="count" class="muted small-note"></p></div></div>
+        <label class="sr-only" for="holdingsSearch">Search holdings by ticker or name</label>
+        <input id="holdingsSearch" class="holdings-search" type="search" placeholder="Search ticker or name" autocomplete="off" spellcheck="false">
+        <div id="holdingsScroll" class="table-scroll" role="region" aria-labelledby="holdingsHeading" tabindex="0">
+          <table>
+            <thead><tr>
+              <th scope="col">Holding</th>
+              <th scope="col">Quantity</th>
+              <th scope="col">Avg buy price</th>
+              <th scope="col">Current price</th>
+              <th scope="col"><button class="sort" data-sort="costBasis">Cost basis</button></th>
+              <th scope="col"><button class="sort" data-sort="currentValue">Current value</button></th>
+              <th scope="col"><button class="sort" data-sort="profitLoss">P&amp;L</button></th>
+              <th scope="col"><button class="sort" data-sort="totalReturnPct">Total return</button></th>
+              <th scope="col"><button class="sort" data-sort="xirr">XIRR</button></th>
+              <th scope="col">Time held</th>
+            </tr></thead>
+            <tbody id="holdings"></tbody>
+          </table>
         </div>
-    </div>
+        <p id="holdingsEmpty" class="holdings-empty small-note hidden" role="status"></p>
+      </section>
 
-    <!-- Waiting View -->
-    <div id="waitingView" class="hidden min-h-screen flex items-center justify-center p-4">
-        <div class="glass-strong rounded-2xl p-12 w-full max-w-md text-center">
-            <div class="inline-block p-4 bg-emerald-500/10 border border-emerald-300/30 rounded-full mb-6 animate-pulse">
-                <svg class="w-12 h-12 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
+      <section id="activity" class="activity-layout hidden" data-atlas-view="activity">
+        <div class="activity-panel">
+          <div class="section-heading">
+            <h2>Cash flows</h2>
+            <div class="cash-period">
+              <div class="cash-period-endpoint">
+                <span>From</span>
+                <select id="cashFlowStartMonth" aria-label="From month" data-change="flows"></select>
+                <select id="cashFlowStartYear" aria-label="From year" data-change="flows"></select>
+              </div>
+              <div class="cash-period-endpoint">
+                <span>To</span>
+                <select id="cashFlowEndMonth" aria-label="To month" data-change="flows"></select>
+                <select id="cashFlowEndYear" aria-label="To year" data-change="flows"></select>
+              </div>
             </div>
-            <h2 id="waitingTitle" class="text-2xl font-bold text-white mb-4">Waiting for Approval</h2>
-            <p id="waitingMessage" class="text-slate-300 mb-6">Check Robinhood for approval to continue...</p>
-            <div class="flex justify-center space-x-2">
-                <div class="w-3 h-3 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 0ms;"></div>
-                <div class="w-3 h-3 bg-cyan-400 rounded-full animate-bounce" style="animation-delay: 150ms;"></div>
-                <div class="w-3 h-3 bg-emerald-400 rounded-full animate-bounce" style="animation-delay: 300ms;"></div>
-            </div>
+          </div>
+          <div id="flows" class="cash-metrics" aria-live="polite"></div>
         </div>
+      </section>
+      <section class="atlas-card hidden" data-atlas-view="activity">
+        <div class="section-heading"><div><h2>Robinhood activity</h2><p id="atlasActivityCount" class="small-note"></p></div><div class="atlas-controls"><input type="search" id="atlasActivitySearch" aria-label="Filter activity by ticker" placeholder="Ticker"><select id="atlasActivityKind" aria-label="Activity type"><option value="all">All activity</option><option value="buy">Buys</option><option value="sell">Sells</option><option value="dividend">Dividends</option><option value="grant">Stock rewards</option></select></div></div>
+        <div id="atlasActivity"></div><div class="atlas-pagination"><button type="button" class="btn subtle" id="atlasPrev">Previous</button><span id="atlasPageNumber"></span><button type="button" class="btn subtle" id="atlasNext">Next</button></div>
+      </section>
+      <section class="atlas-card atlas-methods hidden" data-atlas-view="sources">
+        <h2>Sources and coverage</h2><p id="atlasCoverage" class="small-note"></p>
+        <details open><summary>Robinhood</summary><p>Current positions, quantities, cost basis, account cash, and recorded trades and distributions come from the signed-in Robinhood account.</p></details>
+        <details><summary>Yahoo Finance</summary><p>Provides public closing prices, fundamentals, fund holdings, analyst estimates, and news. Valuation coverage counts the value of direct stocks with a positive trailing P/E.</p></details>
+        <details><summary>Portfolio history and VOO</summary><p>History reconstructs securities held on each day from recorded trades and market closes. The latest portfolio value uses Robinhood’s current marks. VOO replays the same dated investment cash flows, including dividend reinvestments.</p></details>
+        <details><summary>Local storage</summary><p>Portfolio data is served to this browser through the local app. Saved watchlists, targets, and alerts stay in this browser. Public market requests use ticker symbols.</p></details>
+      </section>
+    </section>
+
+    <section id="detail" class="detail-section hidden" aria-labelledby="symbol">
+      <a class="back-link" id="atlasDetailBack" href="#overview">← Back to your portfolio</a>
+      <div class="detail-heading"><h1 id="symbol"></h1><p id="name" class="muted"></p></div>
+      <section id="numbers" class="portfolio-summary holding-summary" aria-label="Position metrics"></section>
+      <section class="detail-chart-panel" aria-labelledby="historyHeading">
+        <h2 id="historyHeading">Price history &amp; CAGR</h2>
+        <p id="source" class="small-note"></p>
+        <p id="detailStatus" class="message hidden" role="status"></p>
+        <div id="historyFrame" class="history-canvas hidden"><canvas id="history" role="img" aria-label="Adjusted price history from the first available quote"></canvas></div>
+        <div id="cagr" class="cagr-list"></div>
+      </section>
+      <section class="tools-panel tools-detail" aria-labelledby="holdingResearchHeading">
+        <div class="tools-row"><h2 id="holdingResearchHeading">Market research</h2><div class="tools-inline">
+          <button type="button" class="btn subtle" id="holdingWatch">Add to watchlist</button>
+          <button type="button" class="btn subtle" id="holdingResearchLoad">Load research</button>
+        </div></div>
+        <div id="holdingResearch" aria-live="polite"></div>
+      </section>
+      <div class="detail-context">
+        <section class="detail-chart-panel" aria-labelledby="analystHeading"><h2 id="analystHeading">Analyst sentiment</h2><div id="analyst" class="analyst-copy"></div></section>
+        <section class="detail-chart-panel" aria-labelledby="newsHeading"><h2 id="newsHeading">Latest news</h2><div id="news" class="news-list"></div></section>
+      </div>
+    </section>
     </div>
-
-    <!-- Dashboard View -->
-    <div id="dashboardView" class="hidden min-h-screen p-4 md:p-8">
-        <div class="max-w-7xl mx-auto">
-            <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="inline-flex items-center justify-center w-12 h-12 bg-cyan-500/10 border border-cyan-400/35 rounded-xl shadow-[0_0_28px_rgba(34,211,238,0.2)]">
-                        <i class="fa-solid fa-crow text-cyan-300 text-xl" aria-hidden="true"></i>
-                    </div>
-                    <div>
-                        <h1 class="raven-title text-5xl mb-1">Ravenhood</h1>
-                        <p class="text-slate-300">Real-time view of your portfolio with benchmark intelligence</p>
-                    </div>
-                </div>
-                <div class="glass-panel rounded-lg px-3 py-2 w-full md:w-auto">
-                    <label for="paletteSelect" class="block text-[11px] uppercase tracking-wide text-cyan-200 mb-1">Color scheme</label>
-                    <select id="paletteSelect" class="w-full md:w-48 bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400"></select>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-8">
-                <div class="lg:col-span-2">
-                    <div id="summaryCards" class="grid grid-cols-1 gap-4"></div>
-                </div>
-                <div class="lg:col-span-3 glass-panel rounded-xl p-4 md:p-6">
-                    <div class="flex items-start justify-between gap-3 mb-3">
-                        <div>
-                            <h2 class="text-lg font-bold neon-text">Portfolio Distribution</h2>
-                            <p id="allocationBreadcrumb" class="text-xs text-slate-300 mt-1">Overview</p>
-                        </div>
-                        <button id="allocationBackBtn" type="button" class="hidden px-3 py-1.5 text-xs bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition">
-                            Back
-                        </button>
-                    </div>
-                    <div style="position: relative; height: 460px;">
-                        <canvas id="allocationChart"></canvas>
-                    </div>
-                    <div id="allocationLegendList" class="mt-4 space-y-1"></div>
-                </div>
-            </div>
-
-            <!-- S&P 500 Comparison -->
-            <div id="sp500Card" class="hidden glass-panel rounded-xl p-6 mb-8"></div>
-
-            <!-- Performance Chart -->
-            <div class="glass-panel rounded-xl p-6 mb-8">
-                <h2 class="text-xl font-bold text-white mb-4">Performance vs S&P 500</h2>
-                <div style="height: 400px;">
-                    <canvas id="performanceChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Monthly Cash Flows -->
-            <div id="monthlyCashFlowCard" class="hidden glass-panel rounded-xl p-6 mb-8">
-                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
-                    <h2 class="text-xl font-bold text-white">Monthly Cash Flows</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <select id="cashFlowViewSelect" class="bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400">
-                            <option value="inflowOutflow">View: Inflow / Outflow</option>
-                            <option value="net">View: Net</option>
-                        </select>
-                        <select id="outflowModeSelect" class="bg-slate-900/80 border border-cyan-500/35 text-cyan-100 text-sm rounded px-2 py-1 outline-none focus:ring-2 focus:ring-cyan-400">
-                            <option value="negative">Outflow: Negative</option>
-                            <option value="magnitude">Outflow: Positive Magnitude</option>
-                        </select>
-                    </div>
-                </div>
-                <div style="height: 320px;"><canvas id="cashFlowChart"></canvas></div>
-                <p class="text-xs text-slate-300 mt-3">Inflow = cash received from sells. Outflow = cash spent on buys.</p>
-            </div>
-
-            <!-- Holdings Table -->
-            <div class="glass-panel rounded-xl overflow-hidden">
-                <div class="p-6 border-b border-cyan-500/20">
-                    <h2 class="text-xl font-bold text-white">Stock Holdings</h2>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-slate-900/80">
-                            <tr>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Stock</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Quantity</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Avg Cost</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Current</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Investment</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">Value</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">P&L</th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">
-                                    <button id="sortReturnBtn" type="button" class="inline-flex items-center gap-1 hover:text-cyan-300 transition">
-                                        Return (%)
-                                        <span id="sortReturnIndicator" class="text-cyan-300">↕</span>
-                                    </button>
-                                </th>
-                                <th class="px-4 py-2 text-right text-xs font-semibold text-gray-400 uppercase">XIRR</th>
-                                <th class="px-4 py-2 text-left text-xs font-semibold text-gray-400 uppercase">Time Held</th>
-                            </tr>
-                        </thead>
-                        <tbody id="holdingsTableBody" class="divide-y divide-cyan-500/15"></tbody>
-                    </table>
-                </div>
-                <!-- Pagination Controls -->
-                <div id="holdingsPagination" class="p-4 border-t border-cyan-500/20 flex items-center justify-between">
-                    <div class="text-sm text-slate-400">
-                        Showing <span id="paginationStart">1</span>-<span id="paginationEnd">10</span> of <span id="paginationTotal">0</span> holdings
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <button id="paginationPrev" type="button" class="px-3 py-1.5 text-sm bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fa-solid fa-chevron-left mr-1"></i>Prev
-                        </button>
-                        <div id="paginationPages" class="flex items-center gap-1"></div>
-                        <button id="paginationNext" type="button" class="px-3 py-1.5 text-sm bg-slate-900/80 border border-cyan-500/35 text-cyan-100 rounded hover:bg-slate-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                            Next<i class="fa-solid fa-chevron-right ml-1"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-8 text-center">
-                <button onclick="handleLogout()" class="px-6 py-3 bg-slate-800/90 hover:bg-slate-700 border border-cyan-500/35 text-cyan-100 font-semibold rounded-lg transition duration-200">
-                    Logout
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <script src="/static/palettes.js"></script>
-    <script>
-        const API_URL = 'http://localhost:5005/api';
-        let allocationChartInstance = null;
-        let performanceChartInstance = null;
-        let cashFlowChartInstance = null;
-        let dashboardControlsInitialized = false;
-        let currentPalette = localStorage.getItem('allocationPalette') || 'vibrant';
-        let cashFlowView = localStorage.getItem('cashFlowView') || 'inflowOutflow';
-        let outflowMode = localStorage.getItem('outflowMode') || 'negative';
-        let currentCashFlowTransactions = [];
-        let currentMonthlyCashFlows = [];
-        let currentStocksForAllocation = [];
-        let currentSp500Holding = null;
-        let currentAllocationColorsBySymbol = {};
-        let currentAllocationSlices = [];
-        let allocationViewState = { mode: 'overview', key: null };
-        let holdingsSort = { key: 'simpleReturnPct', direction: null };
-        let holdingsCurrentPage = 1;
-        const HOLDINGS_PER_PAGE = 10;
-        const MAX_ALLOCATION_SLICES = 10;
-        const MAX_ETF_BREAKDOWN_SLICES = 8;
-
-        // Session management variables
-        const SESSION_WARNING_SECONDS = 60; // Show warning at 1 minute remaining
-        let sessionTimerInterval = null;
-        let sessionRemainingSeconds = 0;
-        let sessionWarningShown = false;
-        let sessionWarningDismissed = false;
-
-        // Session management functions
-        function startSessionTimer(remainingSeconds) {
-            sessionRemainingSeconds = remainingSeconds;
-            sessionWarningShown = false;
-            sessionWarningDismissed = false;
-            
-            // Show session timer display
-            document.getElementById('sessionTimerDisplay').classList.remove('hidden');
-            
-            // Clear any existing interval
-            if (sessionTimerInterval) {
-                clearInterval(sessionTimerInterval);
-            }
-            
-            // Update immediately
-            updateSessionTimerDisplay();
-            
-            // Start countdown
-            sessionTimerInterval = setInterval(() => {
-                sessionRemainingSeconds--;
-                updateSessionTimerDisplay();
-                
-                // Show warning at 1 minute remaining
-                if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS && !sessionWarningShown && !sessionWarningDismissed) {
-                    showSessionWarning();
-                }
-                
-                // Update countdown in warning notification
-                if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS) {
-                    document.getElementById('sessionCountdown').textContent = sessionRemainingSeconds;
-                }
-                
-                // Auto logout when time expires
-                if (sessionRemainingSeconds <= 0) {
-                    handleAutoLogout();
-                }
-            }, 1000);
-        }
-
-        function updateSessionTimerDisplay() {
-            const minutes = Math.floor(sessionRemainingSeconds / 60);
-            const seconds = sessionRemainingSeconds % 60;
-            const display = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            document.getElementById('sessionTimerText').textContent = display;
-            
-            // Change color when low on time
-            const timerText = document.getElementById('sessionTimerText');
-            if (sessionRemainingSeconds <= SESSION_WARNING_SECONDS) {
-                timerText.classList.remove('text-cyan-300');
-                timerText.classList.add('text-amber-400');
-            } else {
-                timerText.classList.remove('text-amber-400');
-                timerText.classList.add('text-cyan-300');
-            }
-        }
-
-        function showSessionWarning() {
-            sessionWarningShown = true;
-            const notification = document.getElementById('sessionNotification');
-            notification.classList.add('show', 'urgent');
-            document.getElementById('sessionCountdown').textContent = sessionRemainingSeconds;
-        }
-
-        function hideSessionWarning() {
-            const notification = document.getElementById('sessionNotification');
-            notification.classList.remove('show', 'urgent');
-        }
-
-        function dismissSessionWarning() {
-            sessionWarningDismissed = true;
-            hideSessionWarning();
-        }
-
-        function stopSessionTimer() {
-            if (sessionTimerInterval) {
-                clearInterval(sessionTimerInterval);
-                sessionTimerInterval = null;
-            }
-            document.getElementById('sessionTimerDisplay').classList.add('hidden');
-            hideSessionWarning();
-        }
-
-        async function handleAutoLogout() {
-            stopSessionTimer();
-            
-            // Show logout notification
-            const notification = document.getElementById('sessionNotification');
-            notification.innerHTML = `
-                <div class="glass-strong rounded-xl p-4 border border-red-500/50 max-w-sm">
-                    <div class="flex items-start gap-3">
-                        <div class="flex-shrink-0">
-                            <i class="fa-solid fa-right-from-bracket text-red-400 text-xl"></i>
-                        </div>
-                        <div class="flex-1">
-                            <h4 class="text-red-300 font-semibold text-sm">Session Expired</h4>
-                            <p class="text-slate-300 text-xs mt-1">
-                                You have been logged out due to session timeout.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            `;
-            notification.classList.remove('urgent');
-            notification.classList.add('show');
-            
-            // Call logout endpoint
-            try {
-                await fetch(`${API_URL}/logout`, { method: 'POST' });
-            } catch (e) {
-                // Ignore errors on auto-logout
-            }
-            
-            // Clear form fields
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('mfaCode').value = '';
-            
-            // Show login view
-            showView('login');
-            
-            // Hide notification after 5 seconds
-            setTimeout(() => {
-                notification.classList.remove('show');
-                // Reset notification HTML
-                notification.innerHTML = `
-                    <div class="glass-strong rounded-xl p-4 border border-amber-500/50 max-w-sm">
-                        <div class="flex items-start gap-3">
-                            <div class="flex-shrink-0">
-                                <i class="fa-solid fa-clock text-amber-400 text-xl"></i>
-                            </div>
-                            <div class="flex-1">
-                                <h4 class="text-amber-300 font-semibold text-sm">Session Expiring Soon</h4>
-                                <p class="text-slate-300 text-xs mt-1">
-                                    Your session will expire in <span id="sessionCountdown" class="font-bold text-amber-400">60</span> seconds.
-                                </p>
-                                <p class="text-slate-400 text-xs mt-1">You will be logged out automatically.</p>
-                            </div>
-                            <button onclick="dismissSessionWarning()" class="text-slate-400 hover:text-white transition">
-                                <i class="fa-solid fa-xmark"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }, 5000);
-        }
-
-        async function checkExistingSession() {
-            try {
-                const response = await fetch(`${API_URL}/check-session`);
-                const data = await response.json();
-                
-                if (data.success && data.logged_in && data.session_info) {
-                    // Valid session exists, load dashboard
-                    showView('waiting');
-                    document.getElementById('waitingTitle').textContent = 'Restoring Session';
-                    document.getElementById('waitingMessage').textContent = 'Loading your portfolio from existing session...';
-                    
-                    // Start session timer
-                    startSessionTimer(data.session_info.remaining_seconds);
-                    
-                    // Fetch portfolio data
-                    const portfolioResponse = await fetch(`${API_URL}/portfolio`);
-                    const portfolioData = await portfolioResponse.json();
-                    
-                    if (portfolioData.success) {
-                        renderDashboard(portfolioData.data);
-                        showView('dashboard');
-                        return true;
-                    }
-                }
-                return false;
-            } catch (e) {
-                console.error('Error checking session:', e);
-                return false;
-            }
-        }
-
-        // Check for existing session on page load
-        document.addEventListener('DOMContentLoaded', async () => {
-            const hasSession = await checkExistingSession();
-            if (!hasSession) {
-                showView('login');
-            }
-        });
-
-        if (typeof window.getColorForIndex !== 'function' || !window.PALETTES) {
-            window.PALETTES = {
-                vibrant: {
-                    label: 'Vibrant',
-                    colors: ['#22D3EE', '#34D399', '#38BDF8', '#A3E635', '#14B8A6', '#2DD4BF', '#818CF8', '#F59E0B', '#F97316', '#06B6D4']
-                },
-                muted: {
-                    label: 'Muted',
-                    colors: ['#67E8F9', '#6EE7B7', '#7DD3FC', '#BEF264', '#5EEAD4', '#93C5FD', '#A7F3D0', '#FDE68A', '#FDBA74', '#99F6E4']
-                },
-                colorblind: {
-                    label: 'Colorblind Friendly',
-                    colors: ['#0072B2', '#009E73', '#56B4E9', '#CC79A7', '#F0E442', '#D55E00', '#332288', '#88CCEE', '#44AA99', '#117733']
-                }
-            };
-
-            window.getColorForIndex = function getColorForIndex(paletteName, index) {
-                const palette = window.PALETTES[paletteName] || window.PALETTES.vibrant;
-                const colors = palette.colors;
-                return colors[index % colors.length];
-            };
-        }
-
-        if (!window.ALLOCATION_PALETTE) {
-            window.ALLOCATION_PALETTE = {
-                name: 'Okabe-Ito Dark Safe',
-                etfBase: '#0072B2',
-                sectorColors: ['#E69F00', '#009E73', '#CC79A7', '#D55E00', '#56B4E9', '#F0E442', '#9467BD', '#66A61E', '#8C564B', '#999999'],
-                otherColor: '#7A7A7A',
-                separatorStroke: 'rgba(148, 163, 184, 0.45)'
-            };
-        }
-
-        if (typeof window.getSectorColorForIndex !== 'function') {
-            window.getSectorColorForIndex = function getSectorColorForIndex(index) {
-                return window.ALLOCATION_PALETTE.sectorColors[index % window.ALLOCATION_PALETTE.sectorColors.length];
-            };
-        }
-
-        if (typeof window.getEtfShadeColor !== 'function') {
-            window.getEtfShadeColor = function getEtfShadeColor(index, total) {
-                const blueFamily = ['#005A8D', '#0072B2', '#1C8CD2', '#38A8E8', '#67C0F2', '#94D6FA', '#2E73A6', '#4B9BCF'];
-                return blueFamily[index % blueFamily.length];
-            };
-        }
-
-        if (typeof window.sectorPalette !== 'function') {
-            window.sectorPalette = function sectorPalette() {
-                return [...window.ALLOCATION_PALETTE.sectorColors];
-            };
-        }
-
-        if (typeof window.etfHueRamp !== 'function') {
-            window.etfHueRamp = function etfHueRamp(baseColor, count) {
-                const safeCount = Math.max(1, count);
-                const distinctBlues = [
-                    '#0B5ED7', '#1E6FE8', '#2A83F6', '#3F95FF',
-                    '#2C6FD1', '#4A8DE6', '#5EA4FF', '#3A78C2',
-                    '#6AB8FF', '#2872B7', '#4F9ADF', '#76C6FF'
-                ];
-                if (safeCount <= distinctBlues.length) {
-                    return distinctBlues.slice(0, safeCount);
-                }
-
-                const startL = 35;
-                const endL = 70;
-                const saturation = 80;
-                return Array.from({ length: safeCount }, (_, index) => {
-                    const ratio = safeCount === 1 ? 0.5 : index / (safeCount - 1);
-                    const hue = 205 + Math.round(Math.sin(index * 1.7) * 10);
-                    const lightness = Math.round(startL + (endL - startL) * ratio);
-                    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-                });
-            };
-        }
-
-        function monthLabelFromKey(monthKey) {
-            const [year, month] = monthKey.split('-').map(Number);
-            const dt = new Date(Date.UTC(year, month - 1, 1));
-            return dt.toLocaleString('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' });
-        }
-
-        function normalizeDateToMonthKey(dateStr) {
-            if (!dateStr || dateStr.length < 7) {
-                return null;
-            }
-            return dateStr.slice(0, 7);
-        }
-
-        function nextMonthKey(monthKey) {
-            const [year, month] = monthKey.split('-').map(Number);
-            const nextMonth = month === 12 ? 1 : month + 1;
-            const nextYear = month === 12 ? year + 1 : year;
-            return `${nextYear}-${String(nextMonth).padStart(2, '0')}`;
-        }
-
-        function aggregateCashFlowsByMonth(transactions) {
-            if (!transactions || transactions.length === 0) {
-                return [];
-            }
-
-            const totalsByMonth = {};
-            const monthKeys = [];
-
-            transactions.forEach((tx) => {
-                const monthKey = normalizeDateToMonthKey(tx.date);
-                if (!monthKey) {
-                    return;
-                }
-
-                if (!totalsByMonth[monthKey]) {
-                    totalsByMonth[monthKey] = {
-                        monthKey,
-                        monthLabel: monthLabelFromKey(monthKey),
-                        inflow: 0,
-                        outflowAbs: 0,
-                        outflowNegative: 0,
-                        net: 0
-                    };
-                    monthKeys.push(monthKey);
-                }
-
-                const amount = Number(tx.amount) || 0;
-                if (amount >= 0) {
-                    totalsByMonth[monthKey].inflow += amount;
-                } else {
-                    totalsByMonth[monthKey].outflowAbs += Math.abs(amount);
-                    totalsByMonth[monthKey].outflowNegative += amount;
-                }
-                totalsByMonth[monthKey].net += amount;
-            });
-
-            monthKeys.sort();
-            if (monthKeys.length === 0) {
-                return [];
-            }
-
-            const filledMonths = [];
-            let cursor = monthKeys[0];
-            const end = monthKeys[monthKeys.length - 1];
-
-            while (cursor <= end) {
-                if (!totalsByMonth[cursor]) {
-                    totalsByMonth[cursor] = {
-                        monthKey: cursor,
-                        monthLabel: monthLabelFromKey(cursor),
-                        inflow: 0,
-                        outflowAbs: 0,
-                        outflowNegative: 0,
-                        net: 0
-                    };
-                }
-                filledMonths.push(totalsByMonth[cursor]);
-                cursor = nextMonthKey(cursor);
-            }
-
-            return filledMonths;
-        }
-
-        function aggregateFromMonthlySummaryRows(monthlyRows) {
-            if (!monthlyRows || monthlyRows.length === 0) {
-                return [];
-            }
-            return monthlyRows.map((row, idx) => ({
-                monthKey: `${idx}`,
-                monthLabel: row.month,
-                inflow: Number(row.sell) || 0,
-                outflowAbs: Number(row.buy) || 0,
-                outflowNegative: -1 * (Number(row.buy) || 0),
-                net: Number(row.net) || 0
-            }));
-        }
-
-        function computeSimpleReturnPct(holding) {
-            // Simple Return (%) = Profit/Loss ÷ InvestedAmount × 100
-            // Uses current modeled invested basis from `holding.investment`.
-            const investedAmount = Number(holding?.investment) || 0;
-            if (investedAmount === 0) {
-                return null;
-            }
-            const profitLoss = Number(holding?.profitLoss) || 0;
-            return (profitLoss / investedAmount) * 100;
-        }
-
-        function formatSimpleReturn(value) {
-            if (value === null || Number.isNaN(value)) {
-                return '—';
-            }
-            const sign = value >= 0 ? '+' : '';
-            return `${sign}${value.toFixed(2)}%`;
-        }
-
-        function isEtfHolding(stock) {
-            const name = (stock.name || '').toLowerCase();
-            if (stock.isEtf === true) return true;
-            return /\betf\b|index|fund|spdr|ishares|vanguard|invesco/.test(name);
-        }
-
-        function normalizeSectorName(stock) {
-            const rawSector = (stock.sector || '').trim();
-            return rawSector || 'Uncategorized';
-        }
-
-        function capSlices(items, maxSlices, otherLabel = 'Other') {
-            const sorted = [...items].sort((a, b) => b.value - a.value);
-            if (sorted.length <= maxSlices) {
-                return sorted;
-            }
-
-            const keepCount = Math.max(1, maxSlices - 1);
-            const kept = sorted.slice(0, keepCount);
-            const rest = sorted.slice(keepCount);
-            const otherValue = rest.reduce((sum, item) => sum + item.value, 0);
-            const otherSymbols = rest.flatMap((item) => item.symbols || []);
-
-            if (otherValue > 0) {
-                kept.push({
-                    label: otherLabel,
-                    value: otherValue,
-                    symbols: otherSymbols,
-                    drilldownType: null,
-                    drilldownKey: null
-                });
-            }
-
-            return kept;
-        }
-
-        function buildOverviewSlices(stocks) {
-            const etfStocks = stocks.filter(isEtfHolding);
-            const nonEtfStocks = stocks.filter((stock) => !isEtfHolding(stock));
-
-            const slices = [];
-            if (etfStocks.length > 0) {
-                slices.push({
-                    label: 'ETFs',
-                    value: etfStocks.reduce((sum, stock) => sum + stock.currentValue, 0),
-                    symbols: etfStocks.map((stock) => stock.symbol),
-                    drilldownType: 'etf',
-                    drilldownKey: 'ETFs',
-                    bucketType: 'etf'
-                });
-            }
-
-            const sectorMap = {};
-            nonEtfStocks.forEach((stock) => {
-                const sector = normalizeSectorName(stock);
-                if (!sectorMap[sector]) {
-                    sectorMap[sector] = { value: 0, symbols: [] };
-                }
-                sectorMap[sector].value += stock.currentValue;
-                sectorMap[sector].symbols.push(stock.symbol);
-            });
-
-            Object.entries(sectorMap).forEach(([sector, info]) => {
-                slices.push({
-                    label: sector,
-                    value: info.value,
-                    symbols: info.symbols,
-                    drilldownType: 'sector',
-                    drilldownKey: sector,
-                    bucketType: 'sector'
-                });
-            });
-
-            return capSlices(slices.filter((slice) => slice.value > 0), MAX_ALLOCATION_SLICES, 'Other');
-        }
-
-        function buildEtfBreakdownSlices(stocks) {
-            const etfStocks = stocks.filter(isEtfHolding);
-            const items = etfStocks.map((stock) => ({
-                label: stock.symbol,
-                value: stock.currentValue,
-                symbols: [stock.symbol],
-                drilldownType: null,
-                drilldownKey: null,
-                bucketType: 'etf-detail'
-            }));
-
-            return capSlices(items.filter((item) => item.value > 0), MAX_ETF_BREAKDOWN_SLICES, 'Other ETFs');
-        }
-
-        function buildDrilldownSlices(stocks, type, key) {
-            let scoped = [];
-            if (type === 'etf') {
-                scoped = stocks.filter(isEtfHolding);
-            } else if (type === 'sector') {
-                scoped = stocks.filter((stock) => !isEtfHolding(stock) && normalizeSectorName(stock) === key);
-            }
-
-            const items = scoped.map((stock) => ({
-                label: stock.symbol,
-                value: stock.currentValue,
-                symbols: [stock.symbol],
-                drilldownType: null,
-                drilldownKey: null,
-                bucketType: type === 'etf' ? 'etf-detail' : 'sector-detail'
-            }));
-
-            return capSlices(items.filter((item) => item.value > 0), MAX_ALLOCATION_SLICES, type === 'etf' ? 'Other ETFs' : 'Other');
-        }
-
-        function getAllocationSlices(stocks) {
-            if (allocationViewState.mode === 'overview') {
-                const overviewSlices = buildOverviewSlices(stocks);
-                const etfBreakdownSlices = buildEtfBreakdownSlices(stocks);
-                return {
-                    innerSlices: overviewSlices,
-                    outerSlices: etfBreakdownSlices,
-                    legendSlices: overviewSlices
-                };
-            }
-            const detailSlices = buildDrilldownSlices(stocks, allocationViewState.mode, allocationViewState.key);
-            return {
-                innerSlices: detailSlices,
-                outerSlices: [],
-                legendSlices: detailSlices
-            };
-        }
-
-        function updateAllocationNavigationUI() {
-            const breadcrumb = document.getElementById('allocationBreadcrumb');
-            const backBtn = document.getElementById('allocationBackBtn');
-            if (!breadcrumb || !backBtn) return;
-
-            if (allocationViewState.mode === 'overview') {
-                breadcrumb.textContent = 'Overview';
-                backBtn.classList.add('hidden');
-                return;
-            }
-
-            if (allocationViewState.mode === 'etf') {
-                breadcrumb.textContent = 'Overview / ETFs';
-            } else {
-                breadcrumb.textContent = `Overview / ${allocationViewState.key}`;
-            }
-            backBtn.classList.remove('hidden');
-        }
-
-        const allocationCenterLabelPlugin = {
-            id: 'allocationCenterLabel',
-            afterDraw(chart) {
-                if (!chart || chart.canvas?.id !== 'allocationChart') {
-                    return;
-                }
-
-                const info = chart.$allocationInfo;
-                if (!info) {
-                    return;
-                }
-
-                const { innerSlices, hoverItem } = info;
-                const total = innerSlices.reduce((sum, slice) => sum + slice.value, 0);
-                const centerX = chart.chartArea.left + (chart.chartArea.right - chart.chartArea.left) / 2;
-                const centerY = chart.chartArea.top + (chart.chartArea.bottom - chart.chartArea.top) / 2;
-                const ctx = chart.ctx;
-
-                ctx.save();
-                ctx.textAlign = 'center';
-                ctx.fillStyle = 'rgba(148, 163, 184, 0.95)';
-                ctx.font = '600 11px system-ui, -apple-system, Segoe UI, sans-serif';
-                ctx.fillText('Total Investment', centerX, centerY - 10);
-
-                ctx.fillStyle = '#E2E8F0';
-                ctx.font = '700 15px system-ui, -apple-system, Segoe UI, sans-serif';
-                ctx.fillText(formatCurrency(total), centerX, centerY + 12);
-
-                if (hoverItem && hoverItem.name) {
-                    const hoverText = `${hoverItem.name} • ${hoverItem.percentage}%`;
-                    ctx.fillStyle = 'rgba(186, 230, 253, 0.95)';
-                    ctx.font = '600 11px system-ui, -apple-system, Segoe UI, sans-serif';
-                    ctx.fillText(hoverText, centerX, centerY + 32);
-                }
-                ctx.restore();
-            }
-        };
-
-        const hoverCrosshairPlugin = {
-            id: 'hoverCrosshair',
-            afterDraw(chart) {
-                if (chart.config.type !== 'line') return;
-                const tooltip = chart.tooltip;
-                if (!tooltip || !tooltip._active || !tooltip._active.length) return;
-
-                const ctx = chart.ctx;
-                const x = tooltip._active[0].element.x;
-                const topY = chart.scales.y.top;
-                const bottomY = chart.scales.y.bottom;
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(x, topY);
-                ctx.lineTo(x, bottomY);
-                ctx.lineWidth = 1;
-                ctx.strokeStyle = 'rgba(34, 211, 238, 0.35)';
-                ctx.setLineDash([4, 5]);
-                ctx.stroke();
-                ctx.restore();
-            }
-        };
-
-        Chart.register(hoverCrosshairPlugin, allocationCenterLabelPlugin);
-
-        function showView(view) {
-            document.getElementById('loadingView').classList.add('hidden');
-            document.getElementById('loginView').classList.add('hidden');
-            document.getElementById('waitingView').classList.add('hidden');
-            document.getElementById('dashboardView').classList.add('hidden');
-            document.getElementById(view + 'View').classList.remove('hidden');
-        }
-
-        function showError(message) {
-            const errorDiv = document.getElementById('errorMsg');
-            errorDiv.textContent = message;
-            errorDiv.classList.remove('hidden');
-        }
-
-        function hideError() {
-            document.getElementById('errorMsg').classList.add('hidden');
-        }
-
-        function formatCurrency(value) {
-            return new Intl.NumberFormat('en-US', {
-                style: 'currency',
-                currency: 'USD',
-            }).format(value);
-        }
-
-        function formatPercent(value) {
-            return `${(value * 100).toFixed(2)}%`;
-        }
-
-        async function handleLogin() {
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const mfaCode = document.getElementById('mfaCode').value;
-
-            if (!username || !password) {
-                showError('Please enter both username and password');
-                return;
-            }
-
-            hideError();
-            
-            // Show "Waiting for Approval" immediately
-            showView('waiting');
-            document.getElementById('waitingTitle').textContent = 'Waiting for Approval';
-            document.getElementById('waitingMessage').textContent = 'Check Robinhood for approval to continue...';
-
-            try {
-                const response = await fetch(`${API_URL}/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password, mfa_code: mfaCode })
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    // Start session timer if session info provided
-                    if (data.session_info) {
-                        startSessionTimer(data.session_info.remaining_seconds);
-                    }
-                    
-                    // Update to "Retrieving Data"
-                    document.getElementById('waitingTitle').textContent = 'Retrieving Data';
-                    document.getElementById('waitingMessage').textContent = 'Please wait while we fetch your portfolio information...';
-                    
-                    try {
-                        const portfolioResponse = await fetch(`${API_URL}/portfolio`);
-                        const portfolioData = await portfolioResponse.json();
-                        
-                        if (portfolioData.success) {
-                            renderDashboard(portfolioData.data);
-                            showView('dashboard');
-                        } else {
-                            stopSessionTimer();
-                            showError(portfolioData.message || 'Failed to fetch portfolio data');
-                            showView('login');
-                        }
-                    } catch (err) {
-                        stopSessionTimer();
-                        showError('Error fetching portfolio: ' + err.message);
-                        showView('login');
-                    }
-                } else {
-                    showError(data.message || 'Login failed');
-                    showView('login');
-                }
-            } catch (err) {
-                showError('Connection error. Make sure the backend server is running on port 5005.');
-                showView('login');
-            }
-        }
-
-        async function handleLogout() {
-            stopSessionTimer();
-            await fetch(`${API_URL}/logout`, { method: 'POST' });
-            document.getElementById('username').value = '';
-            document.getElementById('password').value = '';
-            document.getElementById('mfaCode').value = '';
-            showView('login');
-        }
-
-        function renderDashboard(data) {
-            const {
-                stocks,
-                sp500,
-                totalInvestment,
-                totalCurrentValue,
-                totalProfitLoss,
-                overallXirr,
-                historicalData,
-                monthlyCashFlows,
-                cashFlowTransactions
-            } = data;
-            const totalReturn = totalInvestment > 0 ? (totalProfitLoss / totalInvestment) * 100 : 0;
-
-            currentCashFlowTransactions = cashFlowTransactions || [];
-            currentMonthlyCashFlows = monthlyCashFlows || [];
-            currentStocksForAllocation = stocks || [];
-            currentSp500Holding = sp500 || null;
-
-            if (!dashboardControlsInitialized) {
-                initializeDashboardControls();
-                dashboardControlsInitialized = true;
-            }
-
-            // Render summary cards
-            const summaryHTML = `
-                <div class="glass-panel rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-cyan-100 text-sm font-medium">Total Investment</span>
-                    </div>
-                    <p class="text-2xl font-bold text-white">${formatCurrency(totalInvestment)}</p>
-                </div>
-                <div class="glass-panel rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-cyan-100 text-sm font-medium">Current Value</span>
-                    </div>
-                    <p class="text-2xl font-bold text-white">${formatCurrency(totalCurrentValue)}</p>
-                </div>
-                <div class="glass-panel rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-cyan-100 text-sm font-medium">Total P&L</span>
-                    </div>
-                    <p class="text-2xl font-bold ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
-                        ${formatCurrency(totalProfitLoss)}
-                    </p>
-                    <p class="text-sm mt-1 ${totalProfitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
-                        ${totalReturn >= 0 ? '+' : ''}${totalReturn.toFixed(2)}%
-                    </p>
-                </div>
-                <div class="glass-panel rounded-xl p-6">
-                    <div class="flex items-center justify-between mb-2">
-                        <span class="text-cyan-100 text-sm font-medium">Overall XIRR</span>
-                    </div>
-                    <p class="text-2xl font-bold neon-text">${formatPercent(overallXirr)}</p>
-                    <p class="text-xs text-slate-400 mt-1">Annualized return</p>
-                </div>
-            `;
-            document.getElementById('summaryCards').innerHTML = summaryHTML;
-
-            // Render S&P 500 comparison
-            if (sp500) {
-                const sp500HTML = `
-                    <h3 class="text-lg font-bold text-white mb-4">📊 S&P 500 Benchmark Comparison</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <p class="text-slate-300 text-xs mb-1">S&P 500 Value</p>
-                            <p class="text-white font-bold">${formatCurrency(sp500.currentValue)}</p>
-                        </div>
-                        <div>
-                            <p class="text-slate-300 text-xs mb-1">S&P 500 P&L</p>
-                            <p class="font-bold ${sp500.profitLoss >= 0 ? 'text-green-400' : 'text-red-400'}">
-                                ${formatCurrency(sp500.profitLoss)}
-                            </p>
-                        </div>
-                        <div>
-                            <p class="text-slate-300 text-xs mb-1">S&P 500 XIRR</p>
-                            <p class="neon-text font-bold">${formatPercent(sp500.xirr)}</p>
-                        </div>
-                        <div>
-                            <p class="text-slate-300 text-xs mb-1">Portfolio vs S&P 500</p>
-                            <p class="font-bold ${overallXirr >= sp500.xirr ? 'text-green-400' : 'text-red-400'}">
-                                ${overallXirr >= sp500.xirr ? '✓ Outperforming' : '✗ Underperforming'}
-                            </p>
-                        </div>
-                    </div>
-                `;
-                document.getElementById('sp500Card').innerHTML = sp500HTML;
-                document.getElementById('sp500Card').classList.remove('hidden');
-            }
-
-            // Render charts
-            renderAllocationChart(stocks);
-            renderPerformanceChart(historicalData || []);
-
-            // Render monthly cash flows
-            renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
-
-            // Render holdings table
-            renderHoldingsTable(stocks, sp500);
-        }
-
-        function initializeDashboardControls() {
-            const paletteSelect = document.getElementById('paletteSelect');
-            const cashFlowViewSelect = document.getElementById('cashFlowViewSelect');
-            const outflowModeSelect = document.getElementById('outflowModeSelect');
-            const sortReturnBtn = document.getElementById('sortReturnBtn');
-            const allocationBackBtn = document.getElementById('allocationBackBtn');
-
-            if (paletteSelect && window.PALETTES) {
-                const paletteOptions = Object.entries(window.PALETTES)
-                    .map(([key, palette]) => `<option value="${key}">${palette.label}</option>`)
-                    .join('');
-                paletteSelect.innerHTML = paletteOptions;
-                if (!window.PALETTES[currentPalette]) {
-                    currentPalette = 'vibrant';
-                }
-                paletteSelect.value = currentPalette;
-                paletteSelect.addEventListener('change', (event) => {
-                    currentPalette = event.target.value;
-                    localStorage.setItem('allocationPalette', currentPalette);
-                    renderAllocationChart(currentStocksForAllocation);
-                });
-            }
-
-            if (cashFlowViewSelect) {
-                cashFlowViewSelect.value = cashFlowView;
-                cashFlowViewSelect.addEventListener('change', (event) => {
-                    cashFlowView = event.target.value;
-                    localStorage.setItem('cashFlowView', cashFlowView);
-                    renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
-                });
-            }
-
-            if (outflowModeSelect) {
-                outflowModeSelect.value = outflowMode;
-                outflowModeSelect.addEventListener('change', (event) => {
-                    outflowMode = event.target.value;
-                    localStorage.setItem('outflowMode', outflowMode);
-                    renderCashFlowChart(currentCashFlowTransactions, currentMonthlyCashFlows);
-                });
-            }
-
-            if (sortReturnBtn) {
-                sortReturnBtn.addEventListener('click', () => {
-                    if (!holdingsSort.direction) {
-                        holdingsSort.direction = 'desc';
-                    } else if (holdingsSort.direction === 'desc') {
-                        holdingsSort.direction = 'asc';
-                    } else {
-                        holdingsSort.direction = null;
-                    }
-                    updateSortIndicator();
-                    renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-                });
-            }
-
-            if (allocationBackBtn) {
-                allocationBackBtn.addEventListener('click', () => {
-                    allocationViewState = { mode: 'overview', key: null };
-                    renderAllocationChart(currentStocksForAllocation);
-                    renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-                });
-            }
-
-            updateSortIndicator();
-            updateAllocationNavigationUI();
-        }
-
-        function updateSortIndicator() {
-            const indicator = document.getElementById('sortReturnIndicator');
-            if (!indicator) {
-                return;
-            }
-            if (!holdingsSort.direction) {
-                indicator.textContent = '↕';
-            } else {
-                indicator.textContent = holdingsSort.direction === 'desc' ? '↓' : '↑';
-            }
-        }
-
-        function renderCashFlowChart(transactions, monthlyRows) {
-            const card = document.getElementById('monthlyCashFlowCard');
-            const canvas = document.getElementById('cashFlowChart');
-            const viewSelect = document.getElementById('cashFlowViewSelect');
-
-            const monthlyData = (transactions && transactions.length > 0)
-                ? aggregateCashFlowsByMonth(transactions)
-                : aggregateFromMonthlySummaryRows(monthlyRows);
-
-            if (!monthlyData || monthlyData.length === 0) {
-                card.classList.add('hidden');
-                if (cashFlowChartInstance) {
-                    cashFlowChartInstance.destroy();
-                    cashFlowChartInstance = null;
-                }
-                return;
-            }
-
-            const labels = monthlyData.map((item) => item.monthLabel);
-            const inflowData = monthlyData.map((item) => item.inflow);
-            const outflowData = monthlyData.map((item) => outflowMode === 'negative' ? item.outflowNegative : item.outflowAbs);
-            const netData = monthlyData.map((item) => item.net);
-
-            const chartDatasets = cashFlowView === 'net'
-                ? [{
-                    label: 'Net Cash Flow',
-                    data: netData,
-                    backgroundColor: netData.map((v) => v >= 0 ? 'rgba(34, 197, 94, 0.72)' : 'rgba(56, 189, 248, 0.72)'),
-                    borderColor: netData.map((v) => v >= 0 ? '#4ADE80' : '#38BDF8'),
-                    borderWidth: 1.5,
-                    borderRadius: 4
-                }]
-                : [
-                    {
-                        label: 'Inflow',
-                        data: inflowData,
-                        backgroundColor: 'rgba(34, 197, 94, 0.72)',
-                        borderColor: '#4ADE80',
-                        borderWidth: 1.5,
-                        borderRadius: 4
-                    },
-                    {
-                        label: outflowMode === 'negative' ? 'Outflow (Negative)' : 'Outflow (Magnitude)',
-                        data: outflowData,
-                        backgroundColor: 'rgba(56, 189, 248, 0.72)',
-                        borderColor: '#67E8F9',
-                        borderWidth: 1.5,
-                        borderRadius: 4
-                    }
-                ];
-
-            if (cashFlowChartInstance) {
-                cashFlowChartInstance.destroy();
-            }
-
-            cashFlowChartInstance = new Chart(canvas.getContext('2d'), {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: chartDatasets
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#BAE6FD'
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                            titleColor: '#E2E8F0',
-                            bodyColor: '#BAE6FD',
-                            borderColor: 'rgba(34, 211, 238, 0.35)',
-                            borderWidth: 1,
-                            callbacks: {
-                                title: (tooltipItems) => tooltipItems?.[0]?.label || '',
-                                label: (context) => `${context.dataset.label}: ${formatCurrency(context.raw)}`,
-                                afterBody: (tooltipItems) => {
-                                    const index = tooltipItems?.[0]?.dataIndex ?? -1;
-                                    const month = monthlyData[index];
-                                    if (!month) {
-                                        return [];
-                                    }
-                                    return [
-                                        `Inflow: ${formatCurrency(month.inflow)}`,
-                                        `Outflow: ${formatCurrency(month.outflowAbs)}`,
-                                        `Net: ${formatCurrency(month.net)}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            stacked: false,
-                            ticks: {
-                                color: '#93C5FD'
-                            },
-                            grid: {
-                                color: 'rgba(56, 189, 248, 0.12)'
-                            }
-                        },
-                        y: {
-                            ticks: {
-                                color: '#93C5FD',
-                                callback: (value) => formatCurrency(value)
-                            },
-                            grid: {
-                                color: 'rgba(56, 189, 248, 0.12)'
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (viewSelect) {
-                viewSelect.value = cashFlowView;
-            }
-
-            card.classList.remove('hidden');
-        }
-
-        function renderAllocationChart(stocks) {
-            if (!stocks || stocks.length === 0) {
-                return;
-            }
-
-            const ctx = document.getElementById('allocationChart').getContext('2d');
-
-            const { innerSlices, outerSlices, legendSlices } = getAllocationSlices(stocks);
-            currentAllocationSlices = legendSlices;
-            currentAllocationColorsBySymbol = {};
-
-            const totalPortfolio = innerSlices.reduce((sum, slice) => sum + slice.value, 0);
-
-            const allEtfSymbols = stocks
-                .filter(isEtfHolding)
-                .map((stock) => stock.symbol)
-                .sort((left, right) => left.localeCompare(right));
-
-            const etfRamp = window.etfHueRamp(window.ALLOCATION_PALETTE.etfBase, Math.max(1, allEtfSymbols.length));
-            const etfSymbolShadeMap = {};
-            allEtfSymbols.forEach((symbol, index) => {
-                etfSymbolShadeMap[symbol] = etfRamp[index % etfRamp.length];
-            });
-
-            const innerColors = innerSlices.map((slice, index) => {
-                if (allocationViewState.mode === 'etf') {
-                    if (slice.label === 'Other ETFs') {
-                        return window.ALLOCATION_PALETTE.otherColor;
-                    }
-                    const symbol = (slice.symbols || [])[0];
-                    return etfSymbolShadeMap[symbol] || window.getEtfShadeColor(index, innerSlices.length);
-                }
-                if (slice.label === 'ETFs') {
-                    return window.ALLOCATION_PALETTE.etfBase;
-                }
-                if (slice.label === 'Other' || slice.label === 'Other ETFs') {
-                    return window.ALLOCATION_PALETTE.otherColor;
-                }
-                const sectors = window.sectorPalette();
-                return sectors[index % sectors.length];
-            });
-
-            const etfInnerIndex = innerSlices.findIndex((slice) => slice.label === 'ETFs');
-            const etfInnerSlice = etfInnerIndex >= 0 ? innerSlices[etfInnerIndex] : null;
-            const etfRotationStartFraction = etfInnerIndex > 0
-                ? innerSlices.slice(0, etfInnerIndex).reduce((sum, slice) => sum + slice.value, 0) / totalPortfolio
-                : 0;
-            const etfCircumferenceFraction = etfInnerSlice && totalPortfolio > 0
-                ? (etfInnerSlice.value / totalPortfolio)
-                : 0;
-            const baseRotationDeg = -90;
-
-            const outerData = outerSlices.map((slice) => slice.value);
-            const outerColorsBase = outerSlices.map((slice, index) => {
-                if (slice.label === 'Other ETFs') {
-                    return window.ALLOCATION_PALETTE.otherColor;
-                }
-                const symbol = (slice.symbols || [])[0];
-                return etfSymbolShadeMap[symbol] || window.getEtfShadeColor(index, outerSlices.length);
-            });
-            const outerBorderColors = outerSlices.map(() => window.ALLOCATION_PALETTE.separatorStroke);
-            const outerBorderWidths = outerSlices.map(() => 1);
-
-            let hoverOuterIndex = null;
-            let computedOuterColors = [...outerColorsBase];
-
-            function updateOuterColorsForHover() {
-                if (hoverOuterIndex === null) {
-                    computedOuterColors = [...outerColorsBase];
-                    return;
-                }
-                computedOuterColors = outerColorsBase.map((color, index) => {
-                    if (index === hoverOuterIndex) return color;
-                    return 'rgba(71, 85, 105, 0.35)';
-                });
-            }
-
-            updateOuterColorsForHover();
-
-            innerSlices.forEach((slice, index) => {
-                (slice.symbols || []).forEach((symbol) => {
-                    if (!currentAllocationColorsBySymbol[symbol]) {
-                        currentAllocationColorsBySymbol[symbol] = innerColors[index];
-                    }
-                });
-            });
-
-            if (allocationChartInstance) {
-                allocationChartInstance.destroy();
-            }
-
-            allocationChartInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: innerSlices.map((slice) => slice.label),
-                    datasets: [
-                        {
-                            label: 'Overview',
-                            data: innerSlices.map((slice) => slice.value),
-                            backgroundColor: innerColors,
-                            hoverBackgroundColor: innerColors,
-                            borderColor: window.ALLOCATION_PALETTE.separatorStroke,
-                            borderWidth: 1.25,
-                            hoverOffset: 6,
-                            radius: '90%',
-                            cutout: '54%'
-                        },
-                        {
-                            label: 'ETF Breakdown',
-                            data: outerData,
-                            backgroundColor: computedOuterColors,
-                            hoverBackgroundColor: computedOuterColors,
-                            borderColor: outerBorderColors,
-                            borderWidth: outerBorderWidths,
-                            hoverOffset: 2,
-                            radius: '100%',
-                            cutout: '88%',
-                            rotation: baseRotationDeg + (etfRotationStartFraction * 360),
-                            circumference: etfCircumferenceFraction * 360
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    rotation: baseRotationDeg,
-                    cutout: '52%',
-                    onHover: (event, activeElements, chart) => {
-                        const activeOuter = activeElements.find((entry) => entry.datasetIndex === 1);
-                        const nextHoverIndex = activeOuter ? activeOuter.index : null;
-                        if (hoverOuterIndex !== nextHoverIndex) {
-                            hoverOuterIndex = nextHoverIndex;
-                            updateOuterColorsForHover();
-                            chart.data.datasets[1].backgroundColor = computedOuterColors;
-                            chart.data.datasets[1].hoverBackgroundColor = computedOuterColors;
-                            chart.update('none');
-                        }
-
-                        const active = activeElements && activeElements.length > 0 ? activeElements[0] : null;
-                        if (active) {
-                            const point = active;
-                            const slice = point.datasetIndex === 1 ? outerSlices[point.dataIndex] : innerSlices[point.dataIndex];
-                            if (slice) {
-                                const percentage = totalPortfolio > 0 ? ((slice.value / totalPortfolio) * 100).toFixed(1) : '0.0';
-                                chart.$allocationInfo.hoverItem = { name: slice.label, percentage };
-                            }
-                        } else {
-                            chart.$allocationInfo.hoverItem = null;
-                        }
-                    },
-                    onClick: (event, activeElements, chart) => {
-                        if (!activeElements || activeElements.length === 0) return;
-                        const active = activeElements[0];
-                        if (active.datasetIndex !== 0) {
-                            return;
-                        }
-
-                        const index = active.index;
-                        const selectedSlice = innerSlices[index];
-                        if (!selectedSlice || !selectedSlice.drilldownType) {
-                            return;
-                        }
-
-                        allocationViewState = {
-                            mode: selectedSlice.drilldownType,
-                            key: selectedSlice.drilldownKey
-                        };
-                        renderAllocationChart(stocks);
-                        renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-                    },
-                    animation: {
-                        animateScale: true,
-                        duration: 1000
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
-                            titleColor: '#E2E8F0',
-                            bodyColor: '#E2E8F0',
-                            borderColor: 'rgba(148, 163, 184, 0.45)',
-                            borderWidth: 1,
-                            filter: (tooltipItem) => {
-                                if (tooltipItem.datasetIndex === 1) {
-                                    return !!outerSlices[tooltipItem.dataIndex];
-                                }
-                                return true;
-                            },
-                            callbacks: {
-                                title: function(contextItems) {
-                                    const item = contextItems[0];
-                                    if (item.datasetIndex === 1) {
-                                        const meta = outerSlices[item.dataIndex];
-                                        return meta ? meta.label : '';
-                                    }
-                                    const slice = innerSlices[item.dataIndex];
-                                    return slice ? slice.label : '';
-                                },
-                                label: function(context) {
-                                    const targetSlice = context.datasetIndex === 1
-                                        ? outerSlices[context.dataIndex]
-                                        : innerSlices[context.dataIndex];
-                                    if (!targetSlice) {
-                                        return [];
-                                    }
-                                    const percentage = totalPortfolio > 0 ? ((targetSlice.value / totalPortfolio) * 100).toFixed(1) : '0.0';
-                                    return [
-                                        `Allocation: ${percentage}%`,
-                                        `Value: ${formatCurrency(targetSlice.value)}`
-                                    ];
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            allocationChartInstance.$allocationInfo = {
-                innerSlices,
-                hoverItem: null
-            };
-
-            updateAllocationLegendList(legendSlices, innerColors, outerSlices, outerColorsBase, totalPortfolio);
-            updateAllocationNavigationUI();
-        }
-
-        function updateAllocationLegendList(slices, colors, etfBreakdownSlices = [], etfBreakdownColors = [], totalPortfolio = null) {
-            const container = document.getElementById('allocationLegendList');
-            if (!container) {
-                return;
-            }
-
-            const total = totalPortfolio ?? slices.reduce((sum, slice) => sum + slice.value, 0);
-
-            const rows = slices.map((slice, index) => {
-                const pct = total > 0 ? ((slice.value / total) * 100).toFixed(1) : '0.0';
-                const breakdownMarkup = (allocationViewState.mode === 'overview' && slice.label === 'ETFs' && etfBreakdownSlices.length > 0)
-                    ? `
-                        <div class="mt-2 ml-4 border-l border-slate-600/60 pl-3 space-y-1">
-                            <p class="text-[11px] uppercase tracking-wide text-slate-400">ETFs breakdown</p>
-                            ${etfBreakdownSlices.map((etfSlice, etfIndex) => {
-                                const etfPct = total > 0 ? ((etfSlice.value / total) * 100).toFixed(1) : '0.0';
-                                return `
-                                    <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                                        <span class="flex items-center gap-2 min-w-0">
-                                            <span class="w-2.5 h-2.5 rounded-full" style="background:${etfBreakdownColors[etfIndex] || window.ALLOCATION_PALETTE.etfBase}"></span>
-                                            <span class="text-[11px] text-slate-300 truncate">${etfSlice.label}</span>
-                                        </span>
-                                        <span class="text-[11px] text-slate-300">${etfPct}% • ${formatCurrency(etfSlice.value)}</span>
-                                    </div>
-                                `;
-                            }).join('')}
-                        </div>
-                    `
-                    : '';
-
-                return `
-                    <div class="w-full px-2 py-2 rounded bg-slate-900/25">
-                        <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-                            <span class="flex items-center gap-2 min-w-0">
-                                <span class="w-2.5 h-2.5 rounded-full" style="background:${colors[index]}"></span>
-                                <span class="text-xs text-slate-200 truncate">${slice.label}</span>
-                            </span>
-                            <span class="text-[11px] text-cyan-200">${pct}% • ${formatCurrency(slice.value)}</span>
-                        </div>
-                        ${breakdownMarkup}
-                    </div>
-                `;
-            });
-
-            container.innerHTML = rows.join('');
-        }
-
-        function renderPerformanceChart(historicalData) {
-            const ctx = document.getElementById('performanceChart').getContext('2d');
-            
-            if (performanceChartInstance) {
-                performanceChartInstance.destroy();
-            }
-
-            if (!historicalData || historicalData.length === 0) {
-                ctx.fillStyle = '#9CA3AF';
-                ctx.font = '16px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText('No historical data available', ctx.canvas.width / 2, ctx.canvas.height / 2);
-                return;
-            }
-
-            performanceChartInstance = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: historicalData.map(d => d.date),
-                    datasets: [
-                        {
-                            label: 'Portfolio',
-                            data: historicalData.map(d => d.portfolio),
-                            borderColor: '#22D3EE',
-                            backgroundColor: (context) => {
-                                const chart = context.chart;
-                                const { ctx, chartArea } = chart;
-                                if (!chartArea) {
-                                    return 'rgba(34, 211, 238, 0.15)';
-                                }
-                                const gradient = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-                                gradient.addColorStop(0, 'rgba(34, 211, 238, 0.26)');
-                                gradient.addColorStop(1, 'rgba(34, 211, 238, 0.02)');
-                                return gradient;
-                            },
-                            fill: true,
-                            tension: 0.32,
-                            borderWidth: 2.8,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            pointHoverBackgroundColor: '#0F172A',
-                            pointHoverBorderColor: '#67E8F9',
-                            pointHoverBorderWidth: 2
-                        },
-                        {
-                            label: 'S&P 500',
-                            data: historicalData.map(d => d.sp500),
-                            borderColor: '#34D399',
-                            backgroundColor: 'rgba(52, 211, 153, 0.06)',
-                            tension: 0.32,
-                            borderWidth: 2.2,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            pointHoverBackgroundColor: '#0F172A',
-                            pointHoverBorderColor: '#6EE7B7',
-                            pointHoverBorderWidth: 2
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                        mode: 'index',
-                        intersect: false
-                    },
-                    plugins: {
-                        legend: { 
-                            labels: { 
-                                color: '#BAE6FD',
-                                font: { size: 12 }
-                            } 
-                        },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(15, 23, 42, 0.94)',
-                            titleColor: '#E2E8F0',
-                            bodyColor: '#BAE6FD',
-                            borderColor: 'rgba(34, 211, 238, 0.35)',
-                            borderWidth: 1,
-                            callbacks: {
-                                label: function(context) {
-                                    return `${context.dataset.label}: ${formatCurrency(context.raw)}`;
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { 
-                            ticks: { 
-                                color: '#93C5FD',
-                                maxRotation: 45,
-                                minRotation: 45
-                            }, 
-                            grid: { color: 'rgba(56, 189, 248, 0.12)' } 
-                        },
-                        y: { 
-                            ticks: { 
-                                color: '#93C5FD',
-                                callback: function(value) {
-                                    return formatCurrency(value);
-                                }
-                            }, 
-                            grid: { color: 'rgba(56, 189, 248, 0.12)' } 
-                        }
-                    }
-                }
-            });
-        }
-
-        function renderHoldingsTable(stocks, sp500) {
-            const allHoldings = (sp500 ? [...stocks, sp500] : [...stocks]).map((holding) => ({
-                ...holding,
-                simpleReturnPct: computeSimpleReturnPct(holding)
-            }));
-
-            if (holdingsSort.direction) {
-                const directionFactor = holdingsSort.direction === 'desc' ? -1 : 1;
-                allHoldings.sort((a, b) => {
-                    const left = a.simpleReturnPct;
-                    const right = b.simpleReturnPct;
-                    if (left === null && right === null) return 0;
-                    if (left === null) return 1;
-                    if (right === null) return -1;
-                    return (left - right) * directionFactor;
-                });
-            }
-
-            // Pagination calculations
-            const totalItems = allHoldings.length;
-            const totalPages = Math.ceil(totalItems / HOLDINGS_PER_PAGE);
-            if (holdingsCurrentPage > totalPages) holdingsCurrentPage = Math.max(1, totalPages);
-            
-            const startIndex = (holdingsCurrentPage - 1) * HOLDINGS_PER_PAGE;
-            const endIndex = Math.min(startIndex + HOLDINGS_PER_PAGE, totalItems);
-            const paginatedHoldings = allHoldings.slice(startIndex, endIndex);
-            
-            const tableHTML = paginatedHoldings.map(stock => {
-                const isSP500 = stock.symbol === '^GSPC';
-                const bgColor = isSP500 ? 'rgba(34, 211, 238, 0.10)' : 
-                            stock.profitLoss >= 0 ? 'rgba(34, 197, 94, 0.08)' : 'rgba(56, 189, 248, 0.08)';
-                const indicatorColor = isSP500
-                    ? '#22D3EE'
-                    : (currentAllocationColorsBySymbol[stock.symbol] || (stock.profitLoss >= 0 ? '#34D399' : '#38BDF8'));
-                const simpleReturnClass = stock.simpleReturnPct === null
-                    ? 'text-slate-400'
-                    : (stock.simpleReturnPct >= 0 ? 'text-emerald-300' : 'text-sky-300');
-                
-                return `
-                    <tr style="background-color: ${bgColor}">
-                        <td class="px-4 py-2">
-                            <div class="flex items-center">
-                                <div class="w-2 h-2 rounded-full mr-3" style="background:${indicatorColor}"></div>
-                                <div>
-                                    <div class="font-semibold text-white flex items-center text-sm">
-                                        ${stock.symbol}
-                                        ${isSP500 ? '<span class="ml-2 text-xs bg-blue-600 text-white px-2 py-0.5 rounded">BENCHMARK</span>' : ''}
-                                    </div>
-                                    <div class="text-xs text-slate-300">${stock.name}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-4 py-2 text-right text-slate-300 text-sm">
-                            ${isSP500 ? stock.quantity.toFixed(4) : stock.quantity}
-                        </td>
-                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.avgCost)}</td>
-                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.currentPrice)}</td>
-                        <td class="px-4 py-2 text-right text-slate-300 text-sm">${formatCurrency(stock.investment)}</td>
-                        <td class="px-4 py-2 text-right font-semibold text-white text-sm">${formatCurrency(stock.currentValue)}</td>
-                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.profitLoss >= 0 ? 'text-emerald-300' : 'text-sky-300'}">
-                            ${formatCurrency(stock.profitLoss)}
-                        </td>
-                        <td class="px-4 py-2 text-right font-semibold text-sm ${simpleReturnClass}">
-                            ${formatSimpleReturn(stock.simpleReturnPct)}
-                        </td>
-                        <td class="px-4 py-2 text-right font-semibold text-sm ${stock.xirr >= 0 ? 'text-cyan-300' : 'text-amber-300'}">
-                            ${formatPercent(stock.xirr)}
-                        </td>
-                        <td class="px-4 py-2 text-xs text-slate-300">${stock.timeHeld}</td>
-                    </tr>
-                `;
-            }).join('');
-            
-            document.getElementById('holdingsTableBody').innerHTML = tableHTML;
-            
-            // Update pagination UI
-            document.getElementById('paginationStart').textContent = totalItems === 0 ? 0 : startIndex + 1;
-            document.getElementById('paginationEnd').textContent = endIndex;
-            document.getElementById('paginationTotal').textContent = totalItems;
-            document.getElementById('paginationPrev').disabled = holdingsCurrentPage === 1;
-            document.getElementById('paginationNext').disabled = holdingsCurrentPage >= totalPages;
-            
-            // Render page buttons
-            const pagesContainer = document.getElementById('paginationPages');
-            let pagesHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const isActive = i === holdingsCurrentPage;
-                pagesHTML += `<button type="button" data-page="${i}" class="px-3 py-1.5 text-sm rounded transition ${isActive ? 'bg-cyan-500 text-slate-900 font-semibold' : 'bg-slate-900/80 border border-cyan-500/35 text-cyan-100 hover:bg-slate-800'}">${i}</button>`;
-            }
-            pagesContainer.innerHTML = pagesHTML;
-        }
-
-        // Allow enter key to submit login
-        document.getElementById('password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') handleLogin();
-        });
-        // Pagination event listeners
-        document.getElementById('paginationPrev').addEventListener('click', () => {
-            if (holdingsCurrentPage > 1) {
-                holdingsCurrentPage--;
-                renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-            }
-        });
-
-        document.getElementById('paginationNext').addEventListener('click', () => {
-            holdingsCurrentPage++;
-            renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-        });
-
-        document.getElementById('paginationPages').addEventListener('click', (e) => {
-            if (e.target.dataset.page) {
-                holdingsCurrentPage = parseInt(e.target.dataset.page);
-                renderHoldingsTable(currentStocksForAllocation, currentSp500Holding);
-            }
-        });
-    </script>
+  </main>
 </body>
 </html>
